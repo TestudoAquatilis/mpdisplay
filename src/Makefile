@@ -35,3 +35,8 @@ $(OBJDIR):
 clean:
 	rm -f $(EXECUTABLE) $(OBJECTS) $(DEPS)
 	rm -rf $(OBJDIR)
+
+memcheck: all
+	valgrind --leak-check=full ./$(EXECUTABLE)
+slicecheck: all
+	G_SLICE=debug-blocks ./$(EXECUTABLE)
