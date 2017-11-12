@@ -1,8 +1,9 @@
 CC=gcc
-#OPTFLAGS=-O2
-OPTFLAGS=-ggdb
+OPTFLAGS=-O2
+#OPTFLAGS=-ggdb
 CFLAGS=-c -Wall -std=gnu99 $(OPTFLAGS)
 LDFLAGS=$(OPTFLAGS)
+#CFLAGS+=-DDEBUG_NOMPD
 
 LIBS=gtk+-3.0 glib-2.0 libmpdclient
 

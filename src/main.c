@@ -14,8 +14,17 @@ static gboolean update_status (gpointer data_p)
 
     if (data->w == NULL) return false;
 
+#ifdef DEBUG_NOMPD
     /* generate dummy data */
+    struct mpdisplay_mpd_status *st = mpdisplay_mpd_status_new ();
+
+    st->success = true;
+    mpdisplay_mpd_status_add_song_data (st, "tag1", "value1");
+    mpdisplay_mpd_status_add_song_data (st, "tag2", "value2 with more content");
+#else
+    /* get status */
     struct mpdisplay_mpd_status *st = mpdisplay_mpd_get_status ();
+#endif
 
     disp_window_update (data->w, st);
 
