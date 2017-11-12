@@ -21,7 +21,7 @@ struct disp_window *disp_window_new ()
     w->win_main    = NULL;
     w->img_play    = NULL;
     w->pbar_time   = NULL;
-    w->lbar_volume = NULL;
+    w->pbar_volume = NULL;
     w->tb_shuffle  = NULL;
     w->tb_repeat   = NULL;
     w->tb_single   = NULL;
@@ -47,7 +47,7 @@ struct disp_window *disp_window_new ()
     hbox1p         = gtk_box_new (GTK_ORIENTATION_HORIZONTAL, 1);
     w->img_play    = gtk_image_new_from_icon_name ("media-playback-stop-symbolic", GTK_ICON_SIZE_DIALOG);
     w->pbar_time   = gtk_progress_bar_new ();
-    w->lbar_volume = gtk_level_bar_new_for_interval (0, 100);
+    w->pbar_volume = gtk_progress_bar_new ();
     hbox1s         = gtk_box_new (GTK_ORIENTATION_HORIZONTAL, 1);
     w->tb_single   = gtk_toggle_button_new ();
     w->tb_shuffle  = gtk_toggle_button_new ();
@@ -66,7 +66,7 @@ struct disp_window *disp_window_new ()
     gtk_progress_bar_set_text      (GTK_PROGRESS_BAR (w->pbar_time), "");
     gtk_progress_bar_set_show_text (GTK_PROGRESS_BAR (w->pbar_time), true);
 
-    gtk_orientable_set_orientation (GTK_ORIENTABLE (w->lbar_volume), GTK_ORIENTATION_HORIZONTAL);
+    gtk_progress_bar_set_fraction  (GTK_PROGRESS_BAR (w->pbar_volume), 0.0);
 
     gtk_frame_set_shadow_type (GTK_FRAME (w->frame_song), GTK_SHADOW_NONE);
 
@@ -82,7 +82,7 @@ struct disp_window *disp_window_new ()
     gtk_box_pack_start (GTK_BOX (hbox1s), w->tb_single,   false, true, 0);
     gtk_box_pack_start (GTK_BOX (hbox1s), w->tb_shuffle,  false, true, 0);
     gtk_box_pack_start (GTK_BOX (hbox1s), w->tb_repeat,   false, true, 0);
-    gtk_box_pack_end   (GTK_BOX (hbox1s), w->lbar_volume, false, true, 0);
+    gtk_box_pack_end   (GTK_BOX (hbox1s), w->pbar_volume, false, true, 0);
     gtk_box_pack_end   (GTK_BOX (hbox1s), img_volume,     false, true, 0);
 
     gtk_box_pack_start (GTK_BOX (vbox0), hbox1p,        false, true, 0);
@@ -174,10 +174,16 @@ void disp_window_update (struct disp_window *w, struct mpdisplay_mpd_status *s)
     gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (w->tb_repeat),  s->repeat);
 
     /* volume */
-    int volume = 0;
-    if (s->volume >= 0) volume = s->volume;
-    if (volume > 100)   volume = 100;
-    gtk_level_bar_set_value (GTK_LEVEL_BAR (w->lbar_volume), volume);
+    gdouble volume = 0;
+    if (s->volume >= 0) {
+        if (s->volume <= 100) {
+            volume = (gdouble) s->volume / (gdouble) 100;
+        } else {
+            volume = 1;
+        }
+    }
+
+    gtk_progress_bar_set_fraction (GTK_PROGRESS_BAR (w->pbar_volume), volume);
 
     /* song data */
     song_data_update (w->frame_song, s);
@@ -205,17 +211,26 @@ static void song_data_update (GtkWidget *sframe, struct mpdisplay_mpd_status *s)
     gtk_widget_set_margin_top    (grid, 5);
     gtk_widget_set_margin_bottom (grid, 5);
 
-    int i = 0;
-    for (GList *li = s->song_data->head; li != NULL; li = li->next, i++) {
-        const char *text = (const char *) li->data;
-        if (text == NULL) text = "";
+    if (s->success) {
+        int i = 0;
+        for (GList *li = s->song_data->head; li != NULL; li = li->next, i++) {
+            const char *text = (const char *) li->data;
+            if (text == NULL) text = "";
 
-        GtkWidget *label = gtk_label_new (text);
+            GtkWidget *label = gtk_label_new (text);
 
-        gtk_widget_set_halign  (label, (i % 2 == 0 ? GTK_ALIGN_START : GTK_ALIGN_FILL));
-        gtk_widget_set_valign  (label, GTK_ALIGN_START);
+            gtk_widget_set_halign (label, (i % 2 == 0 ? GTK_ALIGN_START : GTK_ALIGN_FILL));
+            gtk_widget_set_valign (label, GTK_ALIGN_START);
 
-        gtk_grid_attach (GTK_GRID (grid), label, (i % 2), (i / 2), 1, 1);
+            gtk_grid_attach (GTK_GRID (grid), label, (i % 2), (i / 2), 1, 1);
+        }
+    } else {
+        GtkWidget *label = gtk_label_new ("not connected ...");
+
+        gtk_widget_set_halign (label, GTK_ALIGN_START);
+        gtk_widget_set_valign (label, GTK_ALIGN_START);
+
+        gtk_grid_attach (GTK_GRID (grid), label, 0, 0, 1, 1);
     }
 
     gtk_grid_set_column_homogeneous (GTK_GRID (grid), false);

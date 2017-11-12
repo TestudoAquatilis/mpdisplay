@@ -11,7 +11,7 @@ struct disp_window {
     /* important widgets */
     GtkWidget *img_play;
     GtkWidget *pbar_time;
-    GtkWidget *lbar_volume;
+    GtkWidget *pbar_volume;
     GtkWidget *tb_single;
     GtkWidget *tb_shuffle;
     GtkWidget *tb_repeat;
