@@ -26,7 +26,7 @@ static bool mpdisplay_connection_check ()
     if (mpdisplay_options.debug) {
         printf ("INFO: trying to connect to %s:%d\n", mpdisplay_options.mpd_hostname, mpdisplay_options.mpd_port);
     }
-    
+
     /* connect */
     connection = mpd_connection_new (mpdisplay_options.mpd_hostname, mpdisplay_options.mpd_port, 5000);
     if (connection == NULL) return false;
@@ -54,6 +54,23 @@ static bool mpdisplay_connection_check ()
     }
 
     return true;
+}
+
+/* parse tags to status */
+static void mpdisplay_song_tags_to_status (struct mpd_song *song, struct mpdisplay_mpd_status *st)
+{
+    const char *tag;
+
+    tag = mpd_song_get_tag (song, MPD_TAG_ALBUM, 0);
+    if (tag != NULL) mpdisplay_mpd_status_add_song_data (st, "Album:", tag);
+
+    tag = mpd_song_get_tag (song, MPD_TAG_ALBUM_ARTIST, 0);
+    if (tag != NULL) {
+        mpdisplay_mpd_status_add_song_data (st, "Artist:", tag);
+    } else {
+        tag = mpd_song_get_tag (song, MPD_TAG_ARTIST, 0);
+        if (tag != NULL) mpdisplay_mpd_status_add_song_data (st, "Artist:", tag);
+    }
 }
 
 /* free connection struct */
@@ -91,6 +108,19 @@ struct mpdisplay_mpd_status *mpdisplay_mpd_get_status ()
             continue;
         }
 
+        /* get song */
+        struct mpd_song *song = NULL;
+
+        song = mpd_run_current_song (connection);
+
+        if (song == NULL) {
+            if (mpd_connection_get_error (connection) != MPD_ERROR_SUCCESS) {
+                fprintf (stderr, "ERROR obtaining mpd status: %s\n", mpd_connection_get_error_message (connection));
+                continue;
+            }
+            /* else: no current song */
+        }
+
         /* parse status */
         success = true;
 
@@ -110,8 +140,16 @@ struct mpdisplay_mpd_status *mpdisplay_mpd_get_status ()
         /* volume */
         result->volume = mpd_status_get_volume (status);
 
+        /* song data */
+        if (song != NULL) {
+            mpdisplay_song_tags_to_status (song, result);
+        }
+
         if (status != NULL) {
             mpd_status_free (status);
+        }
+        if (song != NULL) {
+            mpd_song_free (song);
         }
     }
 
