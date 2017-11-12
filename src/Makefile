@@ -1,5 +1,6 @@
 CC=gcc
 OPTFLAGS=-O2
+#OPTFLAGS=-ggdb
 CFLAGS=-c -Wall -std=gnu99 $(OPTFLAGS)
 LDFLAGS=$(OPTFLAGS)
 
@@ -8,7 +9,7 @@ LIBS=gtk+-3.0 glib-2.0 libmpdclient
 CFLAGS+=$(shell pkg-config --cflags $(LIBS))
 LDFLAGS+=$(shell pkg-config --libs $(LIBS))
 
-SOURCES=main.c
+SOURCES=main.c disp_window.c
 EXECUTABLE=mpdisplay
 
 OBJDIR=obj
