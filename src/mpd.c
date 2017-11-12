@@ -4,6 +4,7 @@
 
 #include <stdlib.h>
 #include <stdio.h>
+#include <string.h>
 #include <mpd/client.h>
 
 /* mpd connection */
@@ -59,18 +60,55 @@ static bool mpdisplay_connection_check ()
 /* parse tags to status */
 static void mpdisplay_song_tags_to_status (struct mpd_song *song, struct mpdisplay_mpd_status *st)
 {
-    const char *tag;
+    const char *albumartist = mpd_song_get_tag (song, MPD_TAG_ALBUM_ARTIST, 0);
+    const char *album       = mpd_song_get_tag (song, MPD_TAG_ALBUM, 0);
+    const char *track       = mpd_song_get_tag (song, MPD_TAG_TRACK, 0);
+    const char *name        = mpd_song_get_tag (song, MPD_TAG_NAME, 0);
+    const char *date        = mpd_song_get_tag (song, MPD_TAG_DATE, 0);
 
-    tag = mpd_song_get_tag (song, MPD_TAG_ALBUM, 0);
-    if (tag != NULL) mpdisplay_mpd_status_add_song_data (st, "Album:", tag);
+    GString *tag = g_string_new (NULL);
 
-    tag = mpd_song_get_tag (song, MPD_TAG_ALBUM_ARTIST, 0);
-    if (tag != NULL) {
-        mpdisplay_mpd_status_add_song_data (st, "Artist:", tag);
-    } else {
-        tag = mpd_song_get_tag (song, MPD_TAG_ARTIST, 0);
-        if (tag != NULL) mpdisplay_mpd_status_add_song_data (st, "Artist:", tag);
+    if (albumartist != NULL) {
+        mpdisplay_mpd_status_add_song_data (st, "Artist:", albumartist);
     }
+    if (album != NULL) {
+        g_string_printf (tag, "%s", album);
+        if (date != NULL) {
+            g_string_append_printf (tag, " (%s)", date);
+        }
+
+        mpdisplay_mpd_status_add_song_data (st, "Album:", tag->str);
+    }
+
+    /* artist */
+    int i_artist = 0;
+    while (true) {
+        const char *artist = mpd_song_get_tag (song, MPD_TAG_ARTIST, i_artist);
+        if (artist == NULL) break;
+
+        if (albumartist != NULL) {
+            /* ignore albumartist */
+            if (strcmp (artist, albumartist) == 0) continue;
+        }
+
+        if (i_artist == 0) {
+            g_string_printf (tag, "%s", artist);
+        } else {
+            g_string_append_printf (tag, ", %s", artist);
+        }
+
+        i_artist++;
+    }
+
+    if (i_artist > 0) {
+        if (albumartist == NULL) {
+            mpdisplay_mpd_status_add_song_data (st, "Artist:", tag->str);
+        } else {
+            mpdisplay_mpd_status_add_song_data (st, "Further artists:", tag->str);
+        }
+    }
+
+    g_string_free (tag, true);
 }
 
 /* free connection struct */
