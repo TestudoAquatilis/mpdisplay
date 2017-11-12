@@ -88,7 +88,10 @@ static void mpdisplay_song_tags_to_status (struct mpd_song *song, struct mpdispl
 
         if (albumartist != NULL) {
             /* ignore albumartist */
-            if (strcmp (artist, albumartist) == 0) continue;
+            if (strcmp (artist, albumartist) == 0) {
+                i_artist++;
+                continue;
+            }
         }
 
         if (i_artist == 0) {
