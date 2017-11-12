@@ -2,6 +2,7 @@
 
 #include "disp_window.h"
 #include "options.h"
+#include "mpd.h"
 
 struct us_data {
     struct disp_window *w;
@@ -14,15 +15,11 @@ static gboolean update_status (gpointer data_p)
     if (data->w == NULL) return false;
 
     /* generate dummy data */
-    /* TODO: actual status */
-    struct mpd_status *st = mpd_status_new ();
-
-    mpd_status_add_song_data (st, "tag1", "value1");
-    mpd_status_add_song_data (st, "tag2", "value2");
+    struct mpdisplay_mpd_status *st = mpdisplay_mpd_get_status ();
 
     disp_window_update (data->w, st);
 
-    mpd_status_free (&st);
+    mpdisplay_mpd_status_free (&st);
 
     return true;
 }
@@ -43,6 +40,7 @@ int main (int argc, char **argv)
 
     usd.w = NULL;
     disp_window_free (&w);
+    mpdisplay_mpd_free ();
 
     return 0;
 }

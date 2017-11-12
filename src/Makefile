@@ -11,6 +11,7 @@ LDFLAGS+=$(shell pkg-config --libs $(LIBS))
 
 SOURCES= \
 	main.c \
+	mpd.c \
 	disp_window.c \
 	mpd_status.c \
 	options.c

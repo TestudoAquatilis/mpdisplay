@@ -2,8 +2,10 @@
 #define __MPD_STATUS_H__
 
 #include <stdbool.h>
+#include <glib.h>
 
-struct mpd_status {
+struct mpdisplay_mpd_status {
+    bool success;
     /* player data */
     bool play;
     bool pause;
@@ -18,10 +20,10 @@ struct mpd_status {
     GQueue       *song_data;
 };
 
-struct mpd_status *mpd_status_new  ();
-void               mpd_status_free (struct mpd_status **s_p);
+struct mpdisplay_mpd_status *mpdisplay_mpd_status_new  ();
+void                         mpdisplay_mpd_status_free (struct mpdisplay_mpd_status **s_p);
 
-void               mpd_status_add_song_data (struct mpd_status *s, const char *tag, const char *value);
+void                         mpdisplay_mpd_status_add_song_data (struct mpdisplay_mpd_status *s, const char *tag, const char *value);
 
 
 #endif

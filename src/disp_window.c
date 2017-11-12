@@ -6,13 +6,15 @@
 
 /* signal handler declaration */
 static void sh_window_close (GtkWidget *widget, gpointer data);
-static void song_data_update (GtkWidget *widget, struct mpd_status *s);
+static void song_data_update (GtkWidget *widget, struct mpdisplay_mpd_status *s);
 
 /* initialization/finalization */
 struct disp_window *disp_window_new ()
 {
     struct disp_window *w = g_slice_new (struct disp_window);
     if (w == NULL) return NULL;
+
+    w->done = true;
 
     /*****************/
     /* init pointers */
@@ -22,7 +24,7 @@ struct disp_window *disp_window_new ()
     w->lbar_volume = NULL;
     w->tb_shuffle  = NULL;
     w->tb_repeat   = NULL;
-    w->tb_consec   = NULL;
+    w->tb_single   = NULL;
     w->frame_song  = NULL;
 
     /* temporaryly stored widgets */
@@ -31,7 +33,7 @@ struct disp_window *disp_window_new ()
     GtkWidget *vbox0_s1    = NULL;
     GtkWidget *hbox1p      = NULL;
     GtkWidget *hbox1s      = NULL;
-    GtkWidget *img_consec  = NULL;
+    GtkWidget *lbl_single  = NULL;
     GtkWidget *img_shuffle = NULL;
     GtkWidget *img_repeat  = NULL;
     GtkWidget *img_volume  = NULL;
@@ -47,10 +49,10 @@ struct disp_window *disp_window_new ()
     w->pbar_time   = gtk_progress_bar_new ();
     w->lbar_volume = gtk_level_bar_new_for_interval (0, 100);
     hbox1s         = gtk_box_new (GTK_ORIENTATION_HORIZONTAL, 1);
-    w->tb_consec   = gtk_toggle_button_new ();
+    w->tb_single   = gtk_toggle_button_new ();
     w->tb_shuffle  = gtk_toggle_button_new ();
     w->tb_repeat   = gtk_toggle_button_new ();
-    img_consec     = gtk_image_new_from_icon_name ("media-playlist-consecutive-symbolic", GTK_ICON_SIZE_SMALL_TOOLBAR);
+    lbl_single     = gtk_label_new ("1");
     img_shuffle    = gtk_image_new_from_icon_name ("media-playlist-shuffle-symbolic", GTK_ICON_SIZE_SMALL_TOOLBAR);
     img_repeat     = gtk_image_new_from_icon_name ("media-playlist-repeat-symbolic", GTK_ICON_SIZE_SMALL_TOOLBAR);
     img_volume     = gtk_image_new_from_icon_name ("multimedia-volume-control-symbolic", GTK_ICON_SIZE_SMALL_TOOLBAR);
@@ -73,11 +75,11 @@ struct disp_window *disp_window_new ()
     gtk_box_pack_start (GTK_BOX (hbox1p), w->img_play,  false, true, 0);
     gtk_box_pack_start (GTK_BOX (hbox1p), w->pbar_time, true,  true, 0);
 
-    gtk_container_add (GTK_CONTAINER (w->tb_consec),  img_consec);
+    gtk_container_add (GTK_CONTAINER (w->tb_single),  lbl_single);
     gtk_container_add (GTK_CONTAINER (w->tb_shuffle), img_shuffle);
     gtk_container_add (GTK_CONTAINER (w->tb_repeat),  img_repeat);
 
-    gtk_box_pack_start (GTK_BOX (hbox1s), w->tb_consec,   false, true, 0);
+    gtk_box_pack_start (GTK_BOX (hbox1s), w->tb_single,   false, true, 0);
     gtk_box_pack_start (GTK_BOX (hbox1s), w->tb_shuffle,  false, true, 0);
     gtk_box_pack_start (GTK_BOX (hbox1s), w->tb_repeat,   false, true, 0);
     gtk_box_pack_end   (GTK_BOX (hbox1s), w->lbar_volume, false, true, 0);
@@ -94,6 +96,7 @@ struct disp_window *disp_window_new ()
     /**********/
     /* events */
     g_signal_connect (G_OBJECT (w->win_main), "destroy", G_CALLBACK (sh_window_close), (gpointer) w);
+    w->done = false;
 
     return w;
 }
@@ -115,9 +118,11 @@ void disp_window_show (struct disp_window *w)
     gtk_widget_show_all (GTK_WIDGET (w->win_main));
 }
 
-void disp_window_update (struct disp_window *w, struct mpd_status *s)
+void disp_window_update (struct disp_window *w, struct mpdisplay_mpd_status *s)
 {
     if ((s == NULL) || (w == NULL)) return;
+
+    if (w->done) return;
 
     /* play/pause/stop icon */
     if (s->play) {
@@ -164,7 +169,7 @@ void disp_window_update (struct disp_window *w, struct mpd_status *s)
     g_string_free (st_progress, true);
 
     /* playlist status */
-    gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (w->tb_consec),  !s->single);
+    gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (w->tb_single),  s->single);
     gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (w->tb_shuffle), s->shuffle);
     gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (w->tb_repeat),  s->repeat);
 
@@ -178,7 +183,7 @@ void disp_window_update (struct disp_window *w, struct mpd_status *s)
     song_data_update (w->frame_song, s);
 }
 
-static void song_data_update (GtkWidget *sframe, struct mpd_status *s)
+static void song_data_update (GtkWidget *sframe, struct mpdisplay_mpd_status *s)
 {
     if ((sframe == NULL) || (s == NULL)) return;
 
@@ -223,8 +228,10 @@ static void song_data_update (GtkWidget *sframe, struct mpd_status *s)
 /* signal handlers */
 static void sh_window_close (GtkWidget *widget, gpointer data)
 {
+    struct disp_window* w = (struct disp_window*) data;
+    w->done = true;
+
     gtk_main_quit ();
 
-    struct disp_window* w = (struct disp_window*) data;
     w->win_main = NULL;
 }
