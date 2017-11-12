@@ -63,7 +63,7 @@ static void mpdisplay_song_tags_to_status (struct mpd_song *song, struct mpdispl
     const char *albumartist = mpd_song_get_tag (song, MPD_TAG_ALBUM_ARTIST, 0);
     const char *album       = mpd_song_get_tag (song, MPD_TAG_ALBUM, 0);
     const char *track       = mpd_song_get_tag (song, MPD_TAG_TRACK, 0);
-    const char *name        = mpd_song_get_tag (song, MPD_TAG_NAME, 0);
+    const char *title       = mpd_song_get_tag (song, MPD_TAG_TITLE, 0);
     const char *date        = mpd_song_get_tag (song, MPD_TAG_DATE, 0);
 
     GString *tag = g_string_new (NULL);
@@ -106,6 +106,18 @@ static void mpdisplay_song_tags_to_status (struct mpd_song *song, struct mpdispl
         } else {
             mpdisplay_mpd_status_add_song_data (st, "Further artists:", tag->str);
         }
+    }
+
+    if ((track != NULL) || (title != NULL)) {
+        if ((track != NULL) && (title != NULL)) {
+            g_string_printf (tag, "%s - %s", track, title);
+        } else if (track != NULL) {
+            g_string_printf (tag, "%s", track);
+        } else {
+            g_string_printf (tag, "%s", title);
+        }
+
+        mpdisplay_mpd_status_add_song_data (st, "Track:", tag->str);
     }
 
     g_string_free (tag, true);
