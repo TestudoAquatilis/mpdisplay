@@ -16,6 +16,9 @@ static gboolean update_status (gpointer data_p)
     /* TODO: actual status */
     struct mpd_status *st = mpd_status_new ();
 
+    mpd_status_add_song_data (st, "tag1", "value1");
+    mpd_status_add_song_data (st, "tag2", "value2");
+
     disp_window_update (data->w, st);
 
     mpd_status_free (&st);
