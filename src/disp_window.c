@@ -41,7 +41,7 @@ struct disp_window *disp_window_new ()
     vbox0_s0       = gtk_separator_new (GTK_ORIENTATION_HORIZONTAL);
     vbox0_s1       = gtk_separator_new (GTK_ORIENTATION_HORIZONTAL);
     hbox1p         = gtk_box_new (GTK_ORIENTATION_HORIZONTAL, 1);
-    w->img_play    = gtk_image_new_from_icon_name ("media-playback-stop", GTK_ICON_SIZE_DIALOG);
+    w->img_play    = gtk_image_new_from_icon_name ("media-playback-stop-symbolic", GTK_ICON_SIZE_DIALOG);
     w->pbar_time   = gtk_progress_bar_new ();
     w->lbar_volume = gtk_level_bar_new_for_interval (0, 100);
     hbox1s         = gtk_box_new (GTK_ORIENTATION_HORIZONTAL, 1);
@@ -92,19 +92,81 @@ struct disp_window *disp_window_new ()
     return w;
 }
 
-void disp_window_free (struct disp_window **win)
+void disp_window_free (struct disp_window **w_p)
 {
-    if (win == NULL) return;
+    if (w_p == NULL) return;
 
-    struct disp_window *w = *win;
+    struct disp_window *w = *w_p;
 
     g_slice_free (struct disp_window, w);
-    *win = NULL;
+    *w_p = NULL;
 }
 
 void disp_window_show (struct disp_window *w)
 {
+    if (w == NULL) return;
+
     gtk_widget_show_all (GTK_WIDGET (w->win_main));
+}
+
+void disp_window_update (struct disp_window *w, struct mpd_status *s)
+{
+    if ((s == NULL) || (w == NULL)) return;
+
+    /* play/pause/stop icon */
+    if (s->play) {
+        gtk_image_set_from_icon_name (GTK_IMAGE (w->img_play), "media-playback-play-symbolic", GTK_ICON_SIZE_DIALOG);
+    } else if (s->pause) {
+        gtk_image_set_from_icon_name (GTK_IMAGE (w->img_play), "media-playback-pause-symbolic", GTK_ICON_SIZE_DIALOG);
+    } else {
+        gtk_image_set_from_icon_name (GTK_IMAGE (w->img_play), "media-playback-stop-symbolic", GTK_ICON_SIZE_DIALOG);
+    }
+
+    /* playback time */
+    gdouble  pb_progress = 0;
+    bool     pb_pulse    = false;
+    GString *st_progress = g_string_new (NULL);
+
+    if (s->play || s->pause) {
+        if ((s->seconds_total > 0) && (s->seconds_elapsed >= 0) && (s->seconds_total >= s->seconds_elapsed)) {
+            pb_progress = (gdouble) s->seconds_elapsed / (gdouble) s->seconds_total;
+        } else {
+            pb_progress = 1;
+            if (s->play) pb_pulse = true;
+        }
+        if (s->seconds_elapsed >= 0) {
+            g_string_printf (st_progress, "%d:%02d", s->seconds_elapsed/60, s->seconds_elapsed%60);
+        } else {
+            st_progress = g_string_assign (st_progress, "?");
+        }
+        if (s->seconds_total > 0) {
+            g_string_append_printf (st_progress, " / %d:%02d", s->seconds_total/60, s->seconds_total%60);
+        }
+    } else {
+        if (s->seconds_total >= 0) {
+            g_string_printf (st_progress, "%d:%02d", s->seconds_total/60, s->seconds_total%60);
+        } else {
+            st_progress = g_string_assign (st_progress, "");
+        }
+    }
+
+    gtk_progress_bar_set_fraction  (GTK_PROGRESS_BAR (w->pbar_time), pb_progress);
+    gtk_progress_bar_set_text      (GTK_PROGRESS_BAR (w->pbar_time), st_progress->str);
+
+    if (pb_pulse) gtk_progress_bar_pulse (GTK_PROGRESS_BAR (w->pbar_time));
+
+    g_string_free (st_progress, true);
+
+    /* playlist status */
+    gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (w->tb_consec),  s->single);
+    gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (w->tb_shuffle), !s->shuffle);
+    gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (w->tb_repeat),  s->repeat);
+
+    /* volume */
+    int volume = 0;
+    if (s->volume >= 0) volume = s->volume;
+    if (volume > 100)   volume = 100;
+    gtk_level_bar_set_value (GTK_LEVEL_BAR (w->lbar_volume), volume);
 }
 
 /* signal handlers */

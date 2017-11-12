@@ -9,7 +9,7 @@ LIBS=gtk+-3.0 glib-2.0 libmpdclient
 CFLAGS+=$(shell pkg-config --cflags $(LIBS))
 LDFLAGS+=$(shell pkg-config --libs $(LIBS))
 
-SOURCES=main.c disp_window.c
+SOURCES=main.c disp_window.c mpd_status.c
 EXECUTABLE=mpdisplay
 
 OBJDIR=obj

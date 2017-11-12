@@ -2,6 +2,7 @@
 #define __DISP_WINDOW_H__
 
 #include <gtk/gtk.h>
+#include "mpd_status.h"
 
 struct disp_window {
     /* main window */
@@ -15,8 +16,9 @@ struct disp_window {
     GtkWidget *tb_repeat;
 };
 
-struct disp_window *disp_window_new  ();
-void                disp_window_free (struct disp_window **win);
-void                disp_window_show (struct disp_window *win);
+struct disp_window *disp_window_new    ();
+void                disp_window_free   (struct disp_window **w_p);
+void                disp_window_show   (struct disp_window *w);
+void                disp_window_update (struct disp_window *w, struct mpd_status *s);
 
 #endif
