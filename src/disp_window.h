@@ -14,6 +14,7 @@ struct disp_window {
     GtkWidget *tb_consec;
     GtkWidget *tb_shuffle;
     GtkWidget *tb_repeat;
+    GtkWidget *frame_song;
 };
 
 struct disp_window *disp_window_new    ();

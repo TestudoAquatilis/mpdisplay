@@ -6,6 +6,7 @@
 
 /* signal handler declaration */
 static void sh_window_close (GtkWidget *widget, gpointer data);
+static void song_data_update (GtkWidget *widget, struct mpd_status *s);
 
 /* initialization/finalization */
 struct disp_window *disp_window_new ()
@@ -22,6 +23,7 @@ struct disp_window *disp_window_new ()
     w->tb_shuffle  = NULL;
     w->tb_repeat   = NULL;
     w->tb_consec   = NULL;
+    w->frame_song  = NULL;
 
     /* temporaryly stored widgets */
     GtkWidget *vbox0       = NULL;
@@ -52,6 +54,7 @@ struct disp_window *disp_window_new ()
     img_shuffle    = gtk_image_new_from_icon_name ("media-playlist-shuffle-symbolic", GTK_ICON_SIZE_SMALL_TOOLBAR);
     img_repeat     = gtk_image_new_from_icon_name ("media-playlist-repeat-symbolic", GTK_ICON_SIZE_SMALL_TOOLBAR);
     img_volume     = gtk_image_new_from_icon_name ("multimedia-volume-control-symbolic", GTK_ICON_SIZE_SMALL_TOOLBAR);
+    w->frame_song  = gtk_frame_new (NULL);
 
     /************/
     /* settings */
@@ -62,6 +65,8 @@ struct disp_window *disp_window_new ()
     gtk_progress_bar_set_show_text (GTK_PROGRESS_BAR (w->pbar_time), true);
 
     gtk_orientable_set_orientation (GTK_ORIENTABLE (w->lbar_volume), GTK_ORIENTATION_HORIZONTAL);
+
+    gtk_frame_set_shadow_type (GTK_FRAME (w->frame_song), GTK_SHADOW_NONE);
 
     /***************/
     /* arrangement */
@@ -78,10 +83,11 @@ struct disp_window *disp_window_new ()
     gtk_box_pack_end   (GTK_BOX (hbox1s), w->lbar_volume, false, true, 0);
     gtk_box_pack_end   (GTK_BOX (hbox1s), img_volume,     false, true, 0);
 
-    gtk_box_pack_start (GTK_BOX (vbox0), hbox1p,   false, true, 0);
-    gtk_box_pack_start (GTK_BOX (vbox0), vbox0_s0, false, true, 0);
-    gtk_box_pack_start (GTK_BOX (vbox0), vbox0_s1, false, true, 0);
-    gtk_box_pack_start (GTK_BOX (vbox0), hbox1s,   false, true, 0);
+    gtk_box_pack_start (GTK_BOX (vbox0), hbox1p,        false, true, 0);
+    gtk_box_pack_start (GTK_BOX (vbox0), vbox0_s0,      false, true, 0);
+    gtk_box_pack_start (GTK_BOX (vbox0), w->frame_song, true,  true, 0);
+    gtk_box_pack_start (GTK_BOX (vbox0), vbox0_s1,      false, true, 0);
+    gtk_box_pack_start (GTK_BOX (vbox0), hbox1s,        false, true, 0);
 
     gtk_container_add (GTK_CONTAINER (w->win_main), vbox0);
 
@@ -167,6 +173,51 @@ void disp_window_update (struct disp_window *w, struct mpd_status *s)
     if (s->volume >= 0) volume = s->volume;
     if (volume > 100)   volume = 100;
     gtk_level_bar_set_value (GTK_LEVEL_BAR (w->lbar_volume), volume);
+
+    /* song data */
+    song_data_update (w->frame_song, s);
+}
+
+static void song_data_update (GtkWidget *sframe, struct mpd_status *s)
+{
+    if ((sframe == NULL) || (s == NULL)) return;
+
+    /* remove old children */
+    GtkWidget *old_child = gtk_bin_get_child (GTK_BIN (sframe));
+    if (old_child != NULL) {
+        gtk_container_remove (GTK_CONTAINER (sframe), GTK_WIDGET (old_child));
+    }
+
+    /* add grid */
+    GtkWidget *grid = gtk_grid_new ();
+    gtk_widget_set_halign (grid, GTK_ALIGN_START);
+    gtk_widget_set_valign (grid, GTK_ALIGN_START);
+
+    gtk_grid_set_row_spacing     (GTK_GRID (grid), 5);
+    gtk_grid_set_column_spacing  (GTK_GRID (grid), 5);
+    gtk_widget_set_margin_start  (grid, 5);
+    gtk_widget_set_margin_end    (grid, 5);
+    gtk_widget_set_margin_top    (grid, 5);
+    gtk_widget_set_margin_bottom (grid, 5);
+
+    int i = 0;
+    for (GList *li = s->song_data->head; li != NULL; li = li->next, i++) {
+        const char *text = (const char *) li->data;
+        if (text == NULL) text = "";
+
+        GtkWidget *label = gtk_label_new (text);
+
+        gtk_widget_set_halign  (label, (i % 2 == 0 ? GTK_ALIGN_START : GTK_ALIGN_FILL));
+        gtk_widget_set_valign  (label, GTK_ALIGN_START);
+
+        gtk_grid_attach (GTK_GRID (grid), label, (i % 2), (i / 2), 1, 1);
+    }
+
+    gtk_grid_set_column_homogeneous (GTK_GRID (grid), false);
+    gtk_grid_set_row_homogeneous (GTK_GRID (grid), false);
+
+    gtk_container_add (GTK_CONTAINER (sframe), grid);
+    gtk_widget_show_all (sframe);
 }
 
 /* signal handlers */
