@@ -126,7 +126,7 @@ void disp_window_update (struct disp_window *w, struct mpdisplay_mpd_status *s)
 
     /* play/pause/stop icon */
     if (s->play) {
-        gtk_image_set_from_icon_name (GTK_IMAGE (w->img_play), "media-playback-play-symbolic", GTK_ICON_SIZE_DIALOG);
+        gtk_image_set_from_icon_name (GTK_IMAGE (w->img_play), "media-playback-start-symbolic", GTK_ICON_SIZE_DIALOG);
     } else if (s->pause) {
         gtk_image_set_from_icon_name (GTK_IMAGE (w->img_play), "media-playback-pause-symbolic", GTK_ICON_SIZE_DIALOG);
     } else {
