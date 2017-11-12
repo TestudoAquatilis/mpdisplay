@@ -1,6 +1,6 @@
 CC=gcc
-OPTFLAGS=-O2
-#OPTFLAGS=-ggdb
+#OPTFLAGS=-O2
+OPTFLAGS=-ggdb
 CFLAGS=-c -Wall -std=gnu99 $(OPTFLAGS)
 LDFLAGS=$(OPTFLAGS)
 
