@@ -1,6 +1,7 @@
 #include <gtk/gtk.h>
 
 #include "disp_window.h"
+#include "options.h"
 
 struct us_data {
     struct disp_window *w;
@@ -29,6 +30,7 @@ static gboolean update_status (gpointer data_p)
 int main (int argc, char **argv)
 {
     gtk_init (&argc, &argv);
+    if (!mpdisplay_parse_options (&argc, &argv)) return 1;
 
     struct disp_window *w = disp_window_new ();
 
