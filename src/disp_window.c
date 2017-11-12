@@ -158,8 +158,8 @@ void disp_window_update (struct disp_window *w, struct mpd_status *s)
     g_string_free (st_progress, true);
 
     /* playlist status */
-    gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (w->tb_consec),  s->single);
-    gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (w->tb_shuffle), !s->shuffle);
+    gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (w->tb_consec),  !s->single);
+    gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (w->tb_shuffle), s->shuffle);
     gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (w->tb_repeat),  s->repeat);
 
     /* volume */
