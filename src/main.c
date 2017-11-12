@@ -31,6 +31,11 @@ int main (int argc, char **argv)
 
     struct disp_window *w = disp_window_new ();
 
+    /* init status: unconnected */
+    struct mpdisplay_mpd_status *st = mpdisplay_mpd_status_new ();
+    disp_window_update (w, st);
+    mpdisplay_mpd_status_free (&st);
+
     disp_window_show (w);
 
     struct us_data usd = {w};
