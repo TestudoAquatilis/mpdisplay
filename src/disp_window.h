@@ -16,6 +16,8 @@ struct disp_window {
     GtkWidget *tb_shuffle;
     GtkWidget *tb_repeat;
     GtkWidget *frame_song;
+    /* status */
+    struct mpdisplay_mpd_status *current_status;
 };
 
 struct disp_window *disp_window_new    ();

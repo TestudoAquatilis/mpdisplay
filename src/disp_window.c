@@ -6,7 +6,7 @@
 
 /* signal handler declaration */
 static void sh_window_close (GtkWidget *widget, gpointer data);
-static void song_data_update (GtkWidget *widget, struct mpdisplay_mpd_status *s);
+static void song_data_update (GtkWidget *widget, struct mpdisplay_mpd_status *s, struct mpdisplay_mpd_status *cs);
 
 /* initialization/finalization */
 struct disp_window *disp_window_new ()
@@ -18,14 +18,16 @@ struct disp_window *disp_window_new ()
 
     /*****************/
     /* init pointers */
-    w->win_main    = NULL;
-    w->img_play    = NULL;
-    w->pbar_time   = NULL;
-    w->pbar_volume = NULL;
-    w->tb_shuffle  = NULL;
-    w->tb_repeat   = NULL;
-    w->tb_single   = NULL;
-    w->frame_song  = NULL;
+    w->current_status = NULL;
+
+    w->win_main       = NULL;
+    w->img_play       = NULL;
+    w->pbar_time      = NULL;
+    w->pbar_volume    = NULL;
+    w->tb_shuffle     = NULL;
+    w->tb_repeat      = NULL;
+    w->tb_single      = NULL;
+    w->frame_song     = NULL;
 
     /* temporaryly stored widgets */
     GtkWidget *vbox0       = NULL;
@@ -107,6 +109,10 @@ void disp_window_free (struct disp_window **w_p)
 
     struct disp_window *w = *w_p;
 
+    if (w == NULL) return;
+
+    mpdisplay_mpd_status_free (&(w->current_status));
+
     g_slice_free (struct disp_window, w);
     *w_p = NULL;
 }
@@ -121,79 +127,92 @@ void disp_window_show (struct disp_window *w)
 void disp_window_update (struct disp_window *w, struct mpdisplay_mpd_status *s)
 {
     if ((s == NULL) || (w == NULL)) return;
+    struct mpdisplay_mpd_status *cs = w->current_status;
 
     if (w->done) return;
 
     /* play/pause/stop icon */
-    if (s->play) {
-        gtk_image_set_from_icon_name (GTK_IMAGE (w->img_play), "media-playback-start-symbolic", GTK_ICON_SIZE_DIALOG);
-    } else if (s->pause) {
-        gtk_image_set_from_icon_name (GTK_IMAGE (w->img_play), "media-playback-pause-symbolic", GTK_ICON_SIZE_DIALOG);
-    } else {
-        gtk_image_set_from_icon_name (GTK_IMAGE (w->img_play), "media-playback-stop-symbolic", GTK_ICON_SIZE_DIALOG);
+    if ((cs == NULL) || (cs->play != s->play) || (cs->pause != s->pause)) {
+        if (s->play) {
+            gtk_image_set_from_icon_name (GTK_IMAGE (w->img_play), "media-playback-start-symbolic", GTK_ICON_SIZE_DIALOG);
+        } else if (s->pause) {
+            gtk_image_set_from_icon_name (GTK_IMAGE (w->img_play), "media-playback-pause-symbolic", GTK_ICON_SIZE_DIALOG);
+        } else {
+            gtk_image_set_from_icon_name (GTK_IMAGE (w->img_play), "media-playback-stop-symbolic", GTK_ICON_SIZE_DIALOG);
+        }
     }
 
     /* playback time */
-    gdouble  pb_progress = 0;
-    bool     pb_pulse    = false;
-    GString *st_progress = g_string_new (NULL);
+    if ((cs == NULL) || (cs->seconds_elapsed != s->seconds_elapsed) || (cs->seconds_total != s->seconds_total)) {
+        gdouble  pb_progress = 0;
+        bool     pb_pulse    = false;
+        GString *st_progress = g_string_new (NULL);
 
-    if (s->play || s->pause) {
-        if ((s->seconds_total > 0) && (s->seconds_elapsed >= 0) && (s->seconds_total >= s->seconds_elapsed)) {
-            pb_progress = (gdouble) s->seconds_elapsed / (gdouble) s->seconds_total;
+        if (s->play || s->pause) {
+            if ((s->seconds_total > 0) && (s->seconds_elapsed >= 0) && (s->seconds_total >= s->seconds_elapsed)) {
+                pb_progress = (gdouble) s->seconds_elapsed / (gdouble) s->seconds_total;
+            } else {
+                pb_progress = 1;
+                if (s->play) pb_pulse = true;
+            }
+            if (s->seconds_elapsed >= 0) {
+                g_string_printf (st_progress, "%d:%02d", s->seconds_elapsed/60, s->seconds_elapsed%60);
+            } else {
+                st_progress = g_string_assign (st_progress, "?");
+            }
+            if (s->seconds_total > 0) {
+                g_string_append_printf (st_progress, " / %d:%02d", s->seconds_total/60, s->seconds_total%60);
+            }
         } else {
-            pb_progress = 1;
-            if (s->play) pb_pulse = true;
+            if (s->seconds_total >= 0) {
+                g_string_printf (st_progress, "%d:%02d", s->seconds_total/60, s->seconds_total%60);
+            } else {
+                st_progress = g_string_assign (st_progress, "");
+            }
         }
-        if (s->seconds_elapsed >= 0) {
-            g_string_printf (st_progress, "%d:%02d", s->seconds_elapsed/60, s->seconds_elapsed%60);
-        } else {
-            st_progress = g_string_assign (st_progress, "?");
-        }
-        if (s->seconds_total > 0) {
-            g_string_append_printf (st_progress, " / %d:%02d", s->seconds_total/60, s->seconds_total%60);
-        }
-    } else {
-        if (s->seconds_total >= 0) {
-            g_string_printf (st_progress, "%d:%02d", s->seconds_total/60, s->seconds_total%60);
-        } else {
-            st_progress = g_string_assign (st_progress, "");
-        }
+
+        gtk_progress_bar_set_fraction  (GTK_PROGRESS_BAR (w->pbar_time), pb_progress);
+        gtk_progress_bar_set_text      (GTK_PROGRESS_BAR (w->pbar_time), st_progress->str);
+
+        if (pb_pulse) gtk_progress_bar_pulse (GTK_PROGRESS_BAR (w->pbar_time));
+
+        g_string_free (st_progress, true);
     }
 
-    gtk_progress_bar_set_fraction  (GTK_PROGRESS_BAR (w->pbar_time), pb_progress);
-    gtk_progress_bar_set_text      (GTK_PROGRESS_BAR (w->pbar_time), st_progress->str);
-
-    if (pb_pulse) gtk_progress_bar_pulse (GTK_PROGRESS_BAR (w->pbar_time));
-
-    g_string_free (st_progress, true);
 
     /* playlist status */
-    gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (w->tb_single),  s->single);
-    gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (w->tb_shuffle), s->shuffle);
-    gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (w->tb_repeat),  s->repeat);
+    if ((cs == NULL) || (cs->single != s->single))   gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (w->tb_single),  s->single);
+    if ((cs == NULL) || (cs->shuffle != s->shuffle)) gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (w->tb_shuffle), s->shuffle);
+    if ((cs == NULL) || (cs->repeat != s->repeat))   gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (w->tb_repeat),  s->repeat);
 
     /* volume */
-    gdouble volume = 0;
-    if (s->volume >= 0) {
-        if (s->volume <= 100) {
-            volume = (gdouble) s->volume / (gdouble) 100;
-        } else {
-            volume = 1;
+    if ((cs == NULL) || (cs->volume != s->volume)) {
+        gdouble volume = 0;
+        if (s->volume >= 0) {
+            if (s->volume <= 100) {
+                volume = (gdouble) s->volume / (gdouble) 100;
+            } else {
+                volume = 1;
+            }
         }
+
+        gtk_progress_bar_set_fraction (GTK_PROGRESS_BAR (w->pbar_volume), volume);
     }
 
-    gtk_progress_bar_set_fraction (GTK_PROGRESS_BAR (w->pbar_volume), volume);
-
     /* song data */
-    song_data_update (w->frame_song, s);
+    song_data_update (w->frame_song, s, cs);
+
+    mpdisplay_mpd_status_free (&(w->current_status));
+    w->current_status = mpdisplay_mpd_status_copy (s);
 }
 
-static void song_data_update (GtkWidget *sframe, struct mpdisplay_mpd_status *s)
+static void song_data_update (GtkWidget *sframe, struct mpdisplay_mpd_status *s, struct mpdisplay_mpd_status *cs)
 {
     if ((sframe == NULL) || (s == NULL)) return;
 
     /* remove old children */
+    if (!((s->success) || (cs == NULL) || (cs->success))) return;
+
     GtkWidget *old_child = gtk_bin_get_child (GTK_BIN (sframe));
     if (old_child != NULL) {
         gtk_container_remove (GTK_CONTAINER (sframe), GTK_WIDGET (old_child));
@@ -225,12 +244,18 @@ static void song_data_update (GtkWidget *sframe, struct mpdisplay_mpd_status *s)
             gtk_grid_attach (GTK_GRID (grid), label, (i % 2), (i / 2), 1, 1);
         }
     } else {
-        GtkWidget *label = gtk_label_new ("not connected ...");
+        if ((cs == NULL) || (cs->success)) {
+            GtkWidget *label = gtk_label_new ("not connected ...");
+            GtkWidget *spinner = gtk_spinner_new ();
 
-        gtk_widget_set_halign (label, GTK_ALIGN_START);
-        gtk_widget_set_valign (label, GTK_ALIGN_START);
+            gtk_widget_set_halign (label, GTK_ALIGN_START);
+            gtk_widget_set_valign (label, GTK_ALIGN_START);
 
-        gtk_grid_attach (GTK_GRID (grid), label, 0, 0, 1, 1);
+            gtk_grid_attach (GTK_GRID (grid), spinner, 0, 0, 1, 1);
+            gtk_grid_attach (GTK_GRID (grid), label, 1, 0, 1, 1);
+
+            gtk_spinner_start (GTK_SPINNER (spinner));
+        }
     }
 
     gtk_grid_set_column_homogeneous (GTK_GRID (grid), false);

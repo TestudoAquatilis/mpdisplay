@@ -24,11 +24,43 @@ struct mpdisplay_mpd_status *mpdisplay_mpd_status_new ()
     return s;
 }
 
+struct mpdisplay_mpd_status *mpdisplay_mpd_status_copy (struct mpdisplay_mpd_status *s)
+{
+    if (s == NULL) return NULL;
+
+    struct mpdisplay_mpd_status *sc = g_slice_new (struct mpdisplay_mpd_status);
+    if (sc == NULL) return NULL;
+
+    sc->success         = s->success;
+
+    sc->play            = s->play;
+    sc->pause           = s->pause;
+    sc->seconds_elapsed = s->seconds_elapsed;
+    sc->seconds_total   = s->seconds_total;
+    sc->single          = s->single;
+    sc->shuffle         = s->shuffle;
+    sc->repeat          = s->repeat;
+    sc->volume          = s->volume;
+
+    sc->song_data_strings = g_string_chunk_new (128);
+    sc->song_data         = g_queue_new ();
+
+    for (GList *li = s->song_data->head; li != NULL; li = li->next) {
+        const char *text = (const char *) li->data;
+        char *local_text = g_string_chunk_insert (sc->song_data_strings, text);
+        g_queue_push_tail (sc->song_data, local_text);
+    }
+
+    return sc;
+}
+
 void mpdisplay_mpd_status_free (struct mpdisplay_mpd_status **s_p)
 {
     if (s_p == NULL) return;
 
     struct mpdisplay_mpd_status *s = *s_p;
+
+    if (s == NULL) return;
 
     g_queue_free (s->song_data);
     g_string_chunk_free (s->song_data_strings);
