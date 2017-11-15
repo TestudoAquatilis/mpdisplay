@@ -82,28 +82,30 @@ static void mpdisplay_song_tags_to_status (struct mpd_song *song, struct mpdispl
 
     /* artist */
     int i_artist = 0;
+    int c_artist = 0;
     while (true) {
         const char *artist = mpd_song_get_tag (song, MPD_TAG_ARTIST, i_artist);
+        i_artist++;
+
         if (artist == NULL) break;
 
         if (albumartist != NULL) {
             /* ignore albumartist */
             if (strcmp (artist, albumartist) == 0) {
-                i_artist++;
                 continue;
             }
         }
 
-        if (i_artist == 0) {
+        if (c_artist == 0) {
             g_string_printf (tag, "%s", artist);
         } else {
             g_string_append_printf (tag, ", %s", artist);
         }
 
-        i_artist++;
+        c_artist++;
     }
 
-    if (i_artist > 0) {
+    if (c_artist > 0) {
         if (albumartist == NULL) {
             mpdisplay_mpd_status_add_song_data (st, "Artist:", tag->str);
         } else {
