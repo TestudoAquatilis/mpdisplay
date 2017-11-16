@@ -65,6 +65,7 @@ static void mpdisplay_song_tags_to_status (struct mpd_song *song, struct mpdispl
     const char *track       = mpd_song_get_tag (song, MPD_TAG_TRACK, 0);
     const char *title       = mpd_song_get_tag (song, MPD_TAG_TITLE, 0);
     const char *date        = mpd_song_get_tag (song, MPD_TAG_DATE, 0);
+    const char *composer    = mpd_song_get_tag (song, MPD_TAG_COMPOSER, 0);
 
     GString *tag = g_string_new (NULL);
 
@@ -123,6 +124,29 @@ static void mpdisplay_song_tags_to_status (struct mpd_song *song, struct mpdispl
         }
 
         mpdisplay_mpd_status_add_song_data (st, "Track:", tag->str);
+    }
+
+    if (composer != NULL) {
+        mpdisplay_mpd_status_add_song_data (st, "Composer:", composer);
+    }
+
+    /* artist */
+    int i_performer = 0;
+    while (true) {
+        const char *performer = mpd_song_get_tag (song, MPD_TAG_PERFORMER, i_performer);
+
+        if (performer == NULL) break;
+
+        if (i_performer == 0) {
+            g_string_printf (tag, "%s", performer);
+        } else {
+            g_string_append_printf (tag, ", %s", performer);
+        }
+
+        i_performer++;
+    }
+    if (i_performer > 0) {
+        mpdisplay_mpd_status_add_song_data (st, "Performer:", tag->str);
     }
 
     g_string_free (tag, true);
