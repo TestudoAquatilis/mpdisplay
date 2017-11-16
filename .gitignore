@@ -2,3 +2,4 @@
 *.vim
 src/obj/*
 src/mpdisplay
+src/*.cfg
