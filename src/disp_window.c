@@ -243,15 +243,19 @@ static void song_data_update (GtkWidget *sframe, struct mpdisplay_mpd_status *s,
     if (s->success) {
         int i = 0;
         for (GList *li = s->song_data->head; li != NULL; li = li->next, i++) {
-            const char *text = (const char *) li->data;
-            if (text == NULL) text = "";
+            struct mpdisplay_song_data_entry *e = (struct mpdisplay_song_data_entry *) li->data;
 
-            GtkWidget *label = gtk_label_new (text);
+            GtkWidget *label_name  = gtk_label_new (e->name);
+            GtkWidget *label_value = gtk_label_new (e->value);
 
-            gtk_widget_set_halign (label, (i % 2 == 0 ? GTK_ALIGN_START : GTK_ALIGN_FILL));
-            gtk_widget_set_valign (label, GTK_ALIGN_START);
+            gtk_widget_set_halign (label_name, GTK_ALIGN_START);
+            gtk_widget_set_valign (label_name, GTK_ALIGN_START);
 
-            gtk_grid_attach (GTK_GRID (grid), label, (i % 2), (i / 2), 1, 1);
+            gtk_widget_set_halign (label_value, GTK_ALIGN_FILL);
+            gtk_widget_set_valign (label_value, GTK_ALIGN_START);
+
+            gtk_grid_attach (GTK_GRID (grid), label_name,  0, i, 1, 1);
+            gtk_grid_attach (GTK_GRID (grid), label_value, 1, i, 1, 1);
         }
     } else {
         if ((cs == NULL) || (cs->success)) {

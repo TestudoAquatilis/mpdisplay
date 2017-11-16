@@ -3,6 +3,30 @@
 
 #include "mpd_status.h"
 
+struct mpdisplay_song_data_entry *mpdisplay_song_data_entry_new ()
+{
+    struct mpdisplay_song_data_entry *e = g_slice_new (struct mpdisplay_song_data_entry);
+    if (e == NULL) return NULL;
+
+    e->name  = NULL;
+    e->value = NULL;
+
+    return e;
+}
+
+void mpdisplay_song_data_entry_free (struct mpdisplay_song_data_entry **e_p)
+{
+    if (e_p == NULL) return;
+
+    struct mpdisplay_song_data_entry *e = *e_p;
+
+    if (e == NULL) return;
+
+    g_slice_free (struct mpdisplay_song_data_entry, e);
+
+    *e_p = NULL;
+}
+
 struct mpdisplay_mpd_status *mpdisplay_mpd_status_new ()
 {
     struct mpdisplay_mpd_status *s = g_slice_new (struct mpdisplay_mpd_status);
@@ -47,9 +71,9 @@ struct mpdisplay_mpd_status *mpdisplay_mpd_status_copy (struct mpdisplay_mpd_sta
     sc->song_data         = g_queue_new ();
 
     for (GList *li = s->song_data->head; li != NULL; li = li->next) {
-        const char *text = (const char *) li->data;
-        char *local_text = g_string_chunk_insert (sc->song_data_strings, text);
-        g_queue_push_tail (sc->song_data, local_text);
+        struct mpdisplay_song_data_entry *e = (struct mpdisplay_song_data_entry *) li->data;
+
+        mpdisplay_mpd_status_add_song_data_entry (sc, e);
     }
 
     return sc;
@@ -63,6 +87,10 @@ void mpdisplay_mpd_status_free (struct mpdisplay_mpd_status **s_p)
 
     if (s == NULL) return;
 
+    for (GList *li = s->song_data->head; li != NULL; li = li->next) {
+        struct mpdisplay_song_data_entry *e = (struct mpdisplay_song_data_entry *) li->data;
+        mpdisplay_song_data_entry_free (&e);
+    }
     g_queue_free (s->song_data);
     g_string_chunk_free (s->song_data_strings);
 
@@ -71,17 +99,29 @@ void mpdisplay_mpd_status_free (struct mpdisplay_mpd_status **s_p)
     *s_p = NULL;
 }
 
-void mpdisplay_mpd_status_add_song_data (struct mpdisplay_mpd_status *s, const char *tag, const char *value)
+void mpdisplay_mpd_status_add_song_data (struct mpdisplay_mpd_status *s, const char *name, const char *value)
 {
     if (s == NULL) return;
-    if (tag == NULL) return;
+    if (name == NULL) return;
     if (value == NULL) return;
 
-    char *local_tag   = g_string_chunk_insert (s->song_data_strings, tag);
-    char *local_value = g_string_chunk_insert (s->song_data_strings, value);
+    struct mpdisplay_song_data_entry *e = mpdisplay_song_data_entry_new ();
+    e->name  = g_string_chunk_insert (s->song_data_strings, name);
+    e->value = g_string_chunk_insert (s->song_data_strings, value);
 
-    g_queue_push_tail (s->song_data, local_tag);
-    g_queue_push_tail (s->song_data, local_value);
+    g_queue_push_tail (s->song_data, e);
+}
+
+void mpdisplay_mpd_status_add_song_data_entry (struct mpdisplay_mpd_status *s, const struct mpdisplay_song_data_entry *e)
+{
+    if (s == NULL) return;
+    if (e == NULL) return;
+
+    struct mpdisplay_song_data_entry *el = mpdisplay_song_data_entry_new ();
+    el->name  = g_string_chunk_insert (s->song_data_strings, e->name);
+    el->value = g_string_chunk_insert (s->song_data_strings, e->value);
+
+    g_queue_push_tail (s->song_data, el);
 }
 
 bool mpdisplay_mpd_status_tags_equal (struct mpdisplay_mpd_status *s1, struct mpdisplay_mpd_status *s2)
@@ -97,10 +137,11 @@ bool mpdisplay_mpd_status_tags_equal (struct mpdisplay_mpd_status *s1, struct mp
     while ((l1 != NULL) || (l2 != NULL)) {
         if ((l1 == NULL) || (l2 == NULL)) return false;
 
-        char *t1 = (char *) l1->data;
-        char *t2 = (char *) l2->data;
+        struct mpdisplay_song_data_entry *e1 = (struct mpdisplay_song_data_entry *) l1->data;
+        struct mpdisplay_song_data_entry *e2 = (struct mpdisplay_song_data_entry *) l2->data;
 
-        if (strcmp (t1, t2) != 0) return false;
+        if (strcmp (e1->name,  e2->name)  != 0) return false;
+        if (strcmp (e1->value, e2->value) != 0) return false;
 
         l1 = l1->next;
         l2 = l2->next;
