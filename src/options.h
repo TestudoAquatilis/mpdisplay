@@ -11,6 +11,10 @@ struct _mpdisplay_options {
     unsigned int mpd_port;
     unsigned int mpd_maxtries;
 
+    int          win_width;
+    int          win_height;
+    bool         win_fullscreen;
+
     const char  *progname;
 
     bool         verbose;

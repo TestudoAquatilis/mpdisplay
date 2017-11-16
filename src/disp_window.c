@@ -3,6 +3,7 @@
 #include <stdbool.h>
 
 #include "disp_window.h"
+#include "options.h"
 
 /* signal handler declaration */
 static void sh_window_close (GtkWidget *widget, gpointer data);
@@ -63,6 +64,14 @@ struct disp_window *disp_window_new ()
     /************/
     /* settings */
     gtk_window_set_title (GTK_WINDOW (w->win_main), "MPDisplay");
+    if ((mpdisplay_options.win_width > 0) | (mpdisplay_options.win_height > 0)) {
+        int w_w = mpdisplay_options.win_width;
+        int w_h = mpdisplay_options.win_height;
+        gtk_window_set_default_size (GTK_WINDOW (w->win_main), w_w, w_h);
+    }
+    if (mpdisplay_options.win_fullscreen) {
+        gtk_window_fullscreen (GTK_WINDOW (w->win_main));
+    }
 
     gtk_progress_bar_set_fraction  (GTK_PROGRESS_BAR (w->pbar_time), 0.0);
     gtk_progress_bar_set_text      (GTK_PROGRESS_BAR (w->pbar_time), "");
