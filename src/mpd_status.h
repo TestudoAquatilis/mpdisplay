@@ -25,6 +25,7 @@ struct mpdisplay_mpd_status *mpdisplay_mpd_status_copy (struct mpdisplay_mpd_sta
 void                         mpdisplay_mpd_status_free (struct mpdisplay_mpd_status **s_p);
 
 void                         mpdisplay_mpd_status_add_song_data (struct mpdisplay_mpd_status *s, const char *tag, const char *value);
+bool                         mpdisplay_mpd_status_tags_equal (struct mpdisplay_mpd_status *s1, struct mpdisplay_mpd_status *s2);
 
 
 #endif

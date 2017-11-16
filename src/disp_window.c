@@ -218,6 +218,7 @@ void disp_window_update (struct disp_window *w, struct mpdisplay_mpd_status *s)
 static void song_data_update (GtkWidget *sframe, struct mpdisplay_mpd_status *s, struct mpdisplay_mpd_status *cs)
 {
     if ((sframe == NULL) || (s == NULL)) return;
+    if (mpdisplay_mpd_status_tags_equal (s, cs)) return;
 
     /* remove old children */
     if (!((s->success) || (cs == NULL) || (cs->success))) return;

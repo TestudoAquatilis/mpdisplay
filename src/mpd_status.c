@@ -1,4 +1,5 @@
 #include <glib.h>
+#include <string.h>
 
 #include "mpd_status.h"
 
@@ -83,3 +84,27 @@ void mpdisplay_mpd_status_add_song_data (struct mpdisplay_mpd_status *s, const c
     g_queue_push_tail (s->song_data, local_value);
 }
 
+bool mpdisplay_mpd_status_tags_equal (struct mpdisplay_mpd_status *s1, struct mpdisplay_mpd_status *s2)
+{
+    if ((s1 == NULL) || (s2 == NULL)) {
+        if ((s1 == NULL) && (s2 == NULL)) return true;
+        return false;
+    }
+
+    GList *l1 = s1->song_data->head;
+    GList *l2 = s2->song_data->head;
+
+    while ((l1 != NULL) || (l2 != NULL)) {
+        if ((l1 == NULL) || (l2 == NULL)) return false;
+
+        char *t1 = (char *) l1->data;
+        char *t2 = (char *) l2->data;
+
+        if (strcmp (t1, t2) != 0) return false;
+
+        l1 = l1->next;
+        l2 = l2->next;
+    }
+
+    return true;
+}
