@@ -254,6 +254,8 @@ static void song_data_update (GtkWidget *sframe, struct mpdisplay_mpd_status *s,
             gtk_widget_set_halign (label_value, GTK_ALIGN_FILL);
             gtk_widget_set_valign (label_value, GTK_ALIGN_START);
 
+            gtk_label_set_line_wrap      (GTK_LABEL (label_value), true);
+
             gtk_grid_attach (GTK_GRID (grid), label_name,  0, i, 1, 1);
             gtk_grid_attach (GTK_GRID (grid), label_value, 1, i, 1, 1);
         }
