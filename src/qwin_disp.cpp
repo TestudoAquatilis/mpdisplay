@@ -13,39 +13,6 @@ WinDisp::WinDisp()
     tm_update->start ();
 }
 
-void WinDisp::create_layout ()
-{
-    /* main layout elements */
-    QWidget *top_row   = create_top_row ();
-    QWidget *top_line  = create_new_separator_line ();
-    QWidget *cen_frame = create_center_frame ();
-    QWidget *bot_line  = create_new_separator_line ();
-    QWidget *bot_row   = create_bottom_row ();
-
-    /* arrange */
-    QVBoxLayout *mainLayout = new QVBoxLayout;
-    mainLayout->addWidget(top_row,   0);
-    mainLayout->addWidget(top_line,  0);
-    mainLayout->addWidget(cen_frame, 1);
-    mainLayout->addWidget(bot_line,  0);
-    mainLayout->addWidget(bot_row,   0);
-
-    /* insert */
-    QWidget *mainWidget = new QWidget;
-    mainWidget->setLayout(mainLayout);
-    setCentralWidget (mainWidget);
-
-    /* title */
-    setWindowTitle("MPDisplay");
-
-    /* size */
-    int w_w = mpdisplay_options.win_width;
-    int w_h = mpdisplay_options.win_height;
-    if ((w_w > 0) | (w_h > 0)) {
-        this->resize (w_w, w_h);
-    }
-}
-
 QWidget *WinDisp::create_top_row ()
 {
     QWidget *result = new QWidget;
@@ -124,6 +91,16 @@ QWidget *WinDisp::create_bottom_row ()
     return result;
 }
 
+QWidget *WinDisp::create_new_separator_line ()
+{
+    QFrame *result = new QFrame;
+
+    result->setFrameShape (QFrame::HLine);
+    result->setFrameShadow (QFrame::Sunken);
+
+    return result;
+}
+
 QWidget *WinDisp::create_center_frame ()
 {
     /* create frame */
@@ -139,14 +116,37 @@ QWidget *WinDisp::create_center_frame ()
     return fr_center;
 }
 
-QWidget *WinDisp::create_new_separator_line ()
+void WinDisp::create_layout ()
 {
-    QFrame *result = new QFrame;
+    /* main layout elements */
+    QWidget *top_row   = create_top_row ();
+    QWidget *top_line  = create_new_separator_line ();
+    QWidget *cen_frame = create_center_frame ();
+    QWidget *bot_line  = create_new_separator_line ();
+    QWidget *bot_row   = create_bottom_row ();
 
-    result->setFrameShape (QFrame::HLine);
-    result->setFrameShadow (QFrame::Sunken);
+    /* arrange */
+    QVBoxLayout *main_layout = new QVBoxLayout;
+    main_layout->addWidget(top_row,   0);
+    main_layout->addWidget(top_line,  0);
+    main_layout->addWidget(cen_frame, 1);
+    main_layout->addWidget(bot_line,  0);
+    main_layout->addWidget(bot_row,   0);
 
-    return result;
+    /* insert */
+    QWidget *main_widget = new QWidget;
+    main_widget->setLayout(main_layout);
+    setCentralWidget (main_widget);
+
+    /* title */
+    setWindowTitle("MPDisplay");
+
+    /* size */
+    int w_w = mpdisplay_options.win_width;
+    int w_h = mpdisplay_options.win_height;
+    if ((w_w > 0) | (w_h > 0)) {
+        this->resize (w_w, w_h);
+    }
 }
 
 void WinDisp::create_update_timer ()

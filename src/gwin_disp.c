@@ -6,13 +6,22 @@
 #include "options.h"
 #include "mpd.h"
 
-/* signal handler declaration */
-static void win_disp_close (GtkWidget *widget, gpointer data);
-static gboolean win_disp_update_mpd_status (gpointer data_p);
+/* constructor helpers */
+static GtkWidget *win_disp_create_top_row            (struct win_disp *w);
+static GtkWidget *win_disp_create_bottom_row         (struct win_disp *w);
+static GtkWidget *win_disp_create_new_separator_line (struct win_disp *w);
+static GtkWidget *win_disp_create_center_frame       (struct win_disp *w);
+static void       win_disp_create_layout             (struct win_disp *w);
+static void       win_disp_create_update_timer       (struct win_disp *w);
 
 /* update helpers */
 static void win_disp_update_mpd_status_st (struct win_disp *w, struct mpdisplay_mpd_status *s);
 static void win_disp_update_tags (GtkWidget *widget, struct mpdisplay_mpd_status *s, struct mpdisplay_mpd_status *cs);
+
+/* signal handler declaration */
+static void win_disp_close (GtkWidget *widget, gpointer data);
+static gboolean win_disp_update_mpd_status (gpointer data_p);
+
 
 /* initialization/finalization */
 struct win_disp *win_disp_new ()
@@ -20,7 +29,6 @@ struct win_disp *win_disp_new ()
     struct win_disp *w = g_slice_new (struct win_disp);
     if (w == NULL) return NULL;
 
-    /*****************/
     /* init pointers */
     w->mpd_st_current = NULL;
 
@@ -34,84 +42,11 @@ struct win_disp *win_disp_new ()
     w->fr_center  = NULL;
     w->tm_update  = -1;
 
-    /* temporaryly stored widgets */
-    GtkWidget *vbox0       = NULL;
-    GtkWidget *vbox0_s0    = NULL;
-    GtkWidget *vbox0_s1    = NULL;
-    GtkWidget *hbox1p      = NULL;
-    GtkWidget *hbox1s      = NULL;
-    GtkWidget *lbl_single  = NULL;
-    GtkWidget *img_shuffle = NULL;
-    GtkWidget *img_repeat  = NULL;
-    GtkWidget *img_volume  = NULL;
+    win_disp_create_layout (w);
 
-    /***************/
-    /* gtk widgets */
-    w->win_main   = gtk_window_new (GTK_WINDOW_TOPLEVEL);
-    vbox0         = gtk_box_new (GTK_ORIENTATION_VERTICAL, 1);
-    vbox0_s0      = gtk_separator_new (GTK_ORIENTATION_HORIZONTAL);
-    vbox0_s1      = gtk_separator_new (GTK_ORIENTATION_HORIZONTAL);
-    hbox1p        = gtk_box_new (GTK_ORIENTATION_HORIZONTAL, 1);
-    w->im_state   = gtk_image_new_from_icon_name ("media-playback-stop-symbolic", GTK_ICON_SIZE_DIALOG);
-    w->pb_time    = gtk_progress_bar_new ();
-    w->pb_volume  = gtk_progress_bar_new ();
-    hbox1s        = gtk_box_new (GTK_ORIENTATION_HORIZONTAL, 1);
-    w->tb_single  = gtk_toggle_button_new ();
-    w->tb_shuffle = gtk_toggle_button_new ();
-    w->tb_repeat  = gtk_toggle_button_new ();
-    lbl_single    = gtk_label_new ("1");
-    img_shuffle   = gtk_image_new_from_icon_name ("media-playlist-shuffle-symbolic", GTK_ICON_SIZE_SMALL_TOOLBAR);
-    img_repeat    = gtk_image_new_from_icon_name ("media-playlist-repeat-symbolic", GTK_ICON_SIZE_SMALL_TOOLBAR);
-    img_volume    = gtk_image_new_from_icon_name ("multimedia-volume-control-symbolic", GTK_ICON_SIZE_SMALL_TOOLBAR);
-    w->fr_center  = gtk_frame_new (NULL);
-
-    /************/
-    /* settings */
-    gtk_window_set_title (GTK_WINDOW (w->win_main), "MPDisplay");
-    if ((mpdisplay_options.win_width > 0) | (mpdisplay_options.win_height > 0)) {
-        int w_w = mpdisplay_options.win_width;
-        int w_h = mpdisplay_options.win_height;
-        gtk_window_set_default_size (GTK_WINDOW (w->win_main), w_w, w_h);
-    }
-    if (mpdisplay_options.win_fullscreen) {
-        gtk_window_fullscreen (GTK_WINDOW (w->win_main));
-    }
-
-    gtk_progress_bar_set_fraction  (GTK_PROGRESS_BAR (w->pb_time), 0.0);
-    gtk_progress_bar_set_text      (GTK_PROGRESS_BAR (w->pb_time), "");
-    gtk_progress_bar_set_show_text (GTK_PROGRESS_BAR (w->pb_time), true);
-
-    gtk_progress_bar_set_fraction  (GTK_PROGRESS_BAR (w->pb_volume), 0.0);
-
-    gtk_frame_set_shadow_type (GTK_FRAME (w->fr_center), GTK_SHADOW_NONE);
-
-    /***************/
-    /* arrangement */
-    gtk_box_pack_start (GTK_BOX (hbox1p), w->im_state,  false, true, 0);
-    gtk_box_pack_start (GTK_BOX (hbox1p), w->pb_time, true,  true, 0);
-
-    gtk_container_add (GTK_CONTAINER (w->tb_single),  lbl_single);
-    gtk_container_add (GTK_CONTAINER (w->tb_shuffle), img_shuffle);
-    gtk_container_add (GTK_CONTAINER (w->tb_repeat),  img_repeat);
-
-    gtk_box_pack_start (GTK_BOX (hbox1s), w->tb_single,  false, true, 0);
-    gtk_box_pack_start (GTK_BOX (hbox1s), w->tb_shuffle, false, true, 0);
-    gtk_box_pack_start (GTK_BOX (hbox1s), w->tb_repeat,  false, true, 0);
-    gtk_box_pack_end   (GTK_BOX (hbox1s), w->pb_volume,  false, true, 0);
-    gtk_box_pack_end   (GTK_BOX (hbox1s), img_volume,    false, true, 0);
-
-    gtk_box_pack_start (GTK_BOX (vbox0), hbox1p,       false, true, 0);
-    gtk_box_pack_start (GTK_BOX (vbox0), vbox0_s0,     false, true, 0);
-    gtk_box_pack_start (GTK_BOX (vbox0), w->fr_center, true,  true, 0);
-    gtk_box_pack_start (GTK_BOX (vbox0), vbox0_s1,     false, true, 0);
-    gtk_box_pack_start (GTK_BOX (vbox0), hbox1s,       false, true, 0);
-
-    gtk_container_add (GTK_CONTAINER (w->win_main), vbox0);
-
-    /**********/
     /* events */
+    win_disp_create_update_timer (w);
     g_signal_connect (G_OBJECT (w->win_main), "destroy", G_CALLBACK (win_disp_close), (gpointer) w);
-    w->tm_update = g_timeout_add (mpdisplay_options.update_interval, win_disp_update_mpd_status, (gpointer) w);
 
     return w;
 }
@@ -135,6 +70,122 @@ void win_disp_show (struct win_disp *w)
     if (w == NULL) return;
 
     gtk_widget_show_all (GTK_WIDGET (w->win_main));
+}
+
+/*****************************************************************************************/
+/* constructor helpers */
+/*****************************************************************************************/
+static GtkWidget *win_disp_create_top_row (struct win_disp *w)
+{
+    GtkWidget *result = gtk_box_new (GTK_ORIENTATION_HORIZONTAL, 1);
+
+    /* icon */
+    w->im_state = gtk_image_new ();
+    /* TODO: update state */
+
+    /* time bar */
+    w->pb_time = gtk_progress_bar_new ();
+
+    gtk_progress_bar_set_fraction  (GTK_PROGRESS_BAR (w->pb_time), 0.0);
+    gtk_progress_bar_set_text      (GTK_PROGRESS_BAR (w->pb_time), "?");
+    gtk_progress_bar_set_show_text (GTK_PROGRESS_BAR (w->pb_time), true);
+
+    /* put everything together */
+    gtk_box_pack_start (GTK_BOX (result), w->im_state, false, true, 0);
+    gtk_box_pack_start (GTK_BOX (result), w->pb_time,  true,  true, 0);
+
+    return result;
+}
+
+static GtkWidget *win_disp_create_bottom_row (struct win_disp *w)
+{
+    GtkWidget *result = gtk_box_new (GTK_ORIENTATION_HORIZONTAL, 1);
+
+    /* tool buttons */
+    w->tb_single  = gtk_toggle_button_new ();
+    w->tb_shuffle = gtk_toggle_button_new ();
+    w->tb_repeat  = gtk_toggle_button_new ();
+
+    GtkWidget *lbl_single  = gtk_label_new ("1");
+    GtkWidget *img_shuffle = gtk_image_new_from_icon_name ("media-playlist-shuffle-symbolic", GTK_ICON_SIZE_SMALL_TOOLBAR);
+    GtkWidget *img_repeat  = gtk_image_new_from_icon_name ("media-playlist-repeat-symbolic", GTK_ICON_SIZE_SMALL_TOOLBAR);
+
+    gtk_container_add (GTK_CONTAINER (w->tb_single),  lbl_single);
+    gtk_container_add (GTK_CONTAINER (w->tb_shuffle), img_shuffle);
+    gtk_container_add (GTK_CONTAINER (w->tb_repeat),  img_repeat);
+
+    /* volume icon */
+    GtkWidget *img_volume  = gtk_image_new_from_icon_name ("multimedia-volume-control-symbolic", GTK_ICON_SIZE_SMALL_TOOLBAR);
+
+    /* volume bar */
+    w->pb_volume  = gtk_progress_bar_new ();
+    gtk_progress_bar_set_fraction  (GTK_PROGRESS_BAR (w->pb_volume), 0.0);
+
+    /* put everything together */
+    gtk_box_pack_start (GTK_BOX (result), w->tb_single,  false, true, 0);
+    gtk_box_pack_start (GTK_BOX (result), w->tb_shuffle, false, true, 0);
+    gtk_box_pack_start (GTK_BOX (result), w->tb_repeat,  false, true, 0);
+    gtk_box_pack_end   (GTK_BOX (result), w->pb_volume,  false, true, 0);
+    gtk_box_pack_end   (GTK_BOX (result), img_volume,    false, true, 0);
+
+    return result;
+}
+
+static GtkWidget *win_disp_create_new_separator_line (struct win_disp *w)
+{
+    GtkWidget *result = gtk_separator_new (GTK_ORIENTATION_HORIZONTAL);
+    return result;
+}
+
+static GtkWidget *win_disp_create_center_frame (struct win_disp *w)
+{
+    w->fr_center  = gtk_frame_new (NULL);
+
+    gtk_frame_set_shadow_type (GTK_FRAME (w->fr_center), GTK_SHADOW_NONE);
+
+    /* TODO: update */
+
+    return w->fr_center;
+}
+
+static void win_disp_create_layout (struct win_disp *w)
+{
+    /* main layout elements */
+    GtkWidget *top_row   = win_disp_create_top_row (w);
+    GtkWidget *top_line  = win_disp_create_new_separator_line (w);
+    GtkWidget *cen_frame = win_disp_create_center_frame (w);
+    GtkWidget *bot_line  = win_disp_create_new_separator_line (w);
+    GtkWidget *bot_row   = win_disp_create_bottom_row (w);
+
+    /* arrange */
+    GtkWidget *main_widget = gtk_box_new (GTK_ORIENTATION_VERTICAL, 1);
+    gtk_box_pack_start (GTK_BOX (main_widget), top_row,   false, true, 0);
+    gtk_box_pack_start (GTK_BOX (main_widget), top_line,  false, true, 0);
+    gtk_box_pack_start (GTK_BOX (main_widget), cen_frame, true,  true, 0);
+    gtk_box_pack_start (GTK_BOX (main_widget), bot_line,  false, true, 0);
+    gtk_box_pack_start (GTK_BOX (main_widget), bot_row,   false, true, 0);
+
+    /* insert */
+    w->win_main = gtk_window_new (GTK_WINDOW_TOPLEVEL);
+    gtk_container_add (GTK_CONTAINER (w->win_main), main_widget);
+
+    /* title */
+    gtk_window_set_title (GTK_WINDOW (w->win_main), "MPDisplay");
+
+    /* size */
+    if ((mpdisplay_options.win_width > 0) | (mpdisplay_options.win_height > 0)) {
+        int w_w = mpdisplay_options.win_width;
+        int w_h = mpdisplay_options.win_height;
+        gtk_window_set_default_size (GTK_WINDOW (w->win_main), w_w, w_h);
+    }
+    if (mpdisplay_options.win_fullscreen) {
+        gtk_window_fullscreen (GTK_WINDOW (w->win_main));
+    }
+}
+
+static void win_disp_create_update_timer (struct win_disp *w)
+{
+    w->tm_update = g_timeout_add (mpdisplay_options.update_interval, win_disp_update_mpd_status, (gpointer) w);
 }
 
 static gboolean win_disp_update_mpd_status (gpointer data_p)
