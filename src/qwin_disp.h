@@ -47,10 +47,10 @@ class WinDisp: public QMainWindow {
         void update_tags_nocon ();
         void update_tags (GList *tlist);
         void update_tags (struct mpdisplay_mpd_status *st);
+        void update_mpd_status (struct mpdisplay_mpd_status *st_new);
 
     private slots:
         void update_mpd_status ();
-        void update_mpd_status (struct mpdisplay_mpd_status *st_new);
 };
 
 #endif

@@ -7,10 +7,12 @@
 #include "mpd.h"
 
 /* signal handler declaration */
-static void sh_window_close (GtkWidget *widget, gpointer data);
+static void win_disp_close (GtkWidget *widget, gpointer data);
 static gboolean win_disp_update_mpd_status (gpointer data_p);
+
+/* update helpers */
 static void win_disp_update_mpd_status_st (struct win_disp *w, struct mpdisplay_mpd_status *s);
-static void song_data_update (GtkWidget *widget, struct mpdisplay_mpd_status *s, struct mpdisplay_mpd_status *cs);
+static void win_disp_update_tags (GtkWidget *widget, struct mpdisplay_mpd_status *s, struct mpdisplay_mpd_status *cs);
 
 /* initialization/finalization */
 struct win_disp *win_disp_new ()
@@ -108,7 +110,7 @@ struct win_disp *win_disp_new ()
 
     /**********/
     /* events */
-    g_signal_connect (G_OBJECT (w->win_main), "destroy", G_CALLBACK (sh_window_close), (gpointer) w);
+    g_signal_connect (G_OBJECT (w->win_main), "destroy", G_CALLBACK (win_disp_close), (gpointer) w);
     w->tm_update = g_timeout_add (mpdisplay_options.update_interval, win_disp_update_mpd_status, (gpointer) w);
 
     return w;
@@ -235,13 +237,13 @@ static void win_disp_update_mpd_status_st (struct win_disp *w, struct mpdisplay_
     }
 
     /* song data */
-    song_data_update (w->fr_center, s, cs);
+    win_disp_update_tags (w->fr_center, s, cs);
 
     mpdisplay_mpd_status_free (&(w->mpd_st_current));
     w->mpd_st_current = mpdisplay_mpd_status_copy (s);
 }
 
-static void song_data_update (GtkWidget *sframe, struct mpdisplay_mpd_status *s, struct mpdisplay_mpd_status *cs)
+static void win_disp_update_tags (GtkWidget *sframe, struct mpdisplay_mpd_status *s, struct mpdisplay_mpd_status *cs)
 {
     if ((sframe == NULL) || (s == NULL)) return;
     if ((cs != NULL) && (!cs->success) && mpdisplay_mpd_status_tags_equal (s, cs)) return;
@@ -308,7 +310,7 @@ static void song_data_update (GtkWidget *sframe, struct mpdisplay_mpd_status *s,
 }
 
 /* signal handlers */
-static void sh_window_close (GtkWidget *widget, gpointer data)
+static void win_disp_close (GtkWidget *widget, gpointer data)
 {
     struct win_disp* w = (struct win_disp*) data;
     if (w == NULL) return;
