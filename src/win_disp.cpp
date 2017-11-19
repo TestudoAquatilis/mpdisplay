@@ -15,12 +15,14 @@ WinDisp::WinDisp()
 
 void WinDisp::create_layout ()
 {
+    /* main layout elements */
     QWidget *top_row   = create_top_row ();
     QWidget *top_line  = create_new_separator_line ();
     QWidget *cen_frame = create_center_frame ();
     QWidget *bot_line  = create_new_separator_line ();
     QWidget *bot_row   = create_bottom_row ();
 
+    /* arrange */
     QVBoxLayout *mainLayout = new QVBoxLayout;
     mainLayout->addWidget(top_row,   0);
     mainLayout->addWidget(top_line,  0);
@@ -28,10 +30,12 @@ void WinDisp::create_layout ()
     mainLayout->addWidget(bot_line,  0);
     mainLayout->addWidget(bot_row,   0);
 
+    /* insert */
     QWidget *mainWidget = new QWidget;
     mainWidget->setLayout(mainLayout);
     setCentralWidget (mainWidget);
 
+    /* title */
     setWindowTitle("MPDisplay");
 }
 
@@ -45,7 +49,7 @@ QWidget *WinDisp::create_top_row ()
 
     /* time bar */
     pb_time = new QProgressBar;
-    pb_time->setFormat ("0:00");
+    pb_time->setFormat ("?");
     pb_time->setTextVisible (true);
 
     pb_time->setMinimum (0);
@@ -111,12 +115,14 @@ QWidget *WinDisp::create_bottom_row ()
 
 QWidget *WinDisp::create_center_frame ()
 {
+    /* create frame */
     fr_center = new QFrame;
     ly_center = new QFormLayout;
 
     fr_center->setFrameShape (QFrame::NoFrame);
     fr_center->setLayout     (ly_center);
 
+    /* fill with no-connection message */
     update_tags_nocon ();
 
     return fr_center;
@@ -160,11 +166,49 @@ void WinDisp::update_playback_state (StateVal s)
     lb_state->setPixmap (QIcon::fromTheme (st_string).pixmap (icon_size, icon_size));
 }
 
+void WinDisp::update_playback_state (struct mpdisplay_mpd_status *st)
+{
+    if ((st == NULL) || (!st->success)) {
+        update_playback_state (ST_STOP);
+        return;
+    }
+
+    struct mpdisplay_mpd_status *cst = mpd_st_current;
+
+    if ((cst != NULL) && (cst->success)) {
+        if ((cst->play == st->play) && (cst->pause == st->pause)) return;
+    }
+
+    if (st->play) {
+        update_playback_state (ST_PLAY);
+    } else if (st->pause) {
+        update_playback_state (ST_PLAY);
+    } else {
+        update_playback_state (ST_STOP);
+    }
+}
+
 void WinDisp::update_playlist_state (bool single, bool repeat, bool shuffle)
 {
     bt_single->setChecked (single);
     bt_repeat->setChecked (repeat);
     bt_shuffle->setChecked (shuffle);
+}
+
+void WinDisp::update_playlist_state (struct mpdisplay_mpd_status *st)
+{
+    if ((st == NULL) || (!st->success)) {
+        update_playlist_state (false, false, false);
+        return;
+    }
+
+    struct mpdisplay_mpd_status *cst = mpd_st_current;
+
+    if ((cst != NULL) && (cst->success)) {
+        if ((cst->single == st->single) && (cst->repeat == st->repeat) && (cst->shuffle == st->shuffle)) return;
+    }
+
+    update_playlist_state (st->single, st->repeat, st->shuffle);
 }
 
 void WinDisp::update_volume (int volume)
@@ -176,6 +220,22 @@ void WinDisp::update_volume (int volume)
     } else {
         pb_volume->setValue (volume);
     }
+}
+
+void WinDisp::update_volume (struct mpdisplay_mpd_status *st)
+{
+    if ((st == NULL) || (!st->success)) {
+        update_volume (0);
+        return;
+    }
+
+    struct mpdisplay_mpd_status *cst = mpd_st_current;
+
+    if ((cst != NULL) && (cst->success)) {
+        if (cst->volume == st->volume) return;
+    }
+
+    update_volume (st->volume);
 }
 
 void WinDisp::update_time (int total_s, int elapsed_s)
@@ -208,6 +268,22 @@ void WinDisp::update_time (int total_s, int elapsed_s)
     g_string_free (st_progress, true);
 }
 
+void WinDisp::update_time (struct mpdisplay_mpd_status *st)
+{
+    if ((st == NULL) || (!st->success)) {
+        update_time (0, 0);
+        return;
+    }
+
+    struct mpdisplay_mpd_status *cst = mpd_st_current;
+
+    if ((cst != NULL) && (cst->success)) {
+        if ((cst->seconds_elapsed == st->seconds_elapsed) && (cst->seconds_total == st->seconds_total)) return;
+    }
+
+    update_time (st->seconds_total, st->seconds_elapsed);
+}
+
 void WinDisp::clear_tags ()
 {
     for (int i = ly_center->rowCount() - 1; i >= 0; i--) {
@@ -225,11 +301,51 @@ void WinDisp::update_tags_nocon ()
     ly_center->addRow (lbl_msg, lbl_dummy);
 }
 
+void WinDisp::update_tags (GList *tlist)
+{
+    clear_tags ();
+
+    for (GList *li = tlist; li != NULL; li = li->next) {
+        struct mpdisplay_song_data_entry *e = static_cast<struct mpdisplay_song_data_entry *>(li->data);
+
+        QLabel *lbl_name  = new QLabel (e->name);
+        QLabel *lbl_value = new QLabel (e->value);
+
+        lbl_name->setAlignment  (Qt::AlignLeft    | Qt::AlignTop);
+        lbl_value->setAlignment (Qt::AlignHCenter | Qt::AlignVCenter);
+
+        lbl_value->setWordWrap (true);
+
+        ly_center->addRow (lbl_name, lbl_value);
+    }
+}
+
+void WinDisp::update_tags (struct mpdisplay_mpd_status *st)
+{
+    if ((st == NULL) || (!st->success)) {
+        update_tags_nocon ();
+        return;
+    }
+
+    struct mpdisplay_mpd_status *cst = mpd_st_current;
+
+    if ((cst != NULL) && (cst->success)) {
+        if (mpdisplay_mpd_status_tags_equal (cst, st)) return;
+    }
+
+    update_tags (st->song_data->head);
+}
+
 void WinDisp::update_mpd_status (struct mpdisplay_mpd_status *st_new)
 {
-    printf ("DEBUG.... mpd status update\n");
+    update_playback_state (st_new);
+    update_playlist_state (st_new);
+    update_volume (st_new);
+    update_time (st_new);
+    update_tags (st_new);
 
-    mpdisplay_mpd_status_free (&st_new);
+    mpdisplay_mpd_status_free (&mpd_st_current);
+    mpd_st_current = mpdisplay_mpd_status_copy (st_new);
 }
 
 void WinDisp::update_mpd_status ()
@@ -248,4 +364,6 @@ void WinDisp::update_mpd_status ()
 #endif
 
     update_mpd_status (st);
+
+    mpdisplay_mpd_status_free (&st);
 }
