@@ -19,6 +19,7 @@ struct _mpdisplay_options {
     int          win_height;
     bool         win_fullscreen;
     bool         win_cursor;
+    bool         win_prioscale;
 
     int          icon_size_playback;
     int          icon_size_toolbar;

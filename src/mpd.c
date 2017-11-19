@@ -70,7 +70,7 @@ static void mpdisplay_song_tags_to_status (struct mpd_song *song, struct mpdispl
     GString *tag = g_string_new (NULL);
 
     if (albumartist != NULL) {
-        mpdisplay_mpd_status_add_song_data (st, "Artist:", albumartist);
+        mpdisplay_mpd_status_add_song_data (st, "Artist:", albumartist, 0);
     }
     if (album != NULL) {
         g_string_printf (tag, "%s", album);
@@ -78,7 +78,7 @@ static void mpdisplay_song_tags_to_status (struct mpd_song *song, struct mpdispl
             g_string_append_printf (tag, " (%s)", date);
         }
 
-        mpdisplay_mpd_status_add_song_data (st, "Album:", tag->str);
+        mpdisplay_mpd_status_add_song_data (st, "Album:", tag->str, 0);
     }
 
     /* artist */
@@ -108,9 +108,9 @@ static void mpdisplay_song_tags_to_status (struct mpd_song *song, struct mpdispl
 
     if (c_artist > 0) {
         if (albumartist == NULL) {
-            mpdisplay_mpd_status_add_song_data (st, "Artist:", tag->str);
+            mpdisplay_mpd_status_add_song_data (st, "Artist:", tag->str, 0);
         } else {
-            mpdisplay_mpd_status_add_song_data (st, "Further artists:", tag->str);
+            mpdisplay_mpd_status_add_song_data (st, "Further artists:", tag->str, -1);
         }
     }
 
@@ -123,11 +123,11 @@ static void mpdisplay_song_tags_to_status (struct mpd_song *song, struct mpdispl
             g_string_printf (tag, "%s", title);
         }
 
-        mpdisplay_mpd_status_add_song_data (st, "Track:", tag->str);
+        mpdisplay_mpd_status_add_song_data (st, "Track:", tag->str, 0);
     }
 
     if (composer != NULL) {
-        mpdisplay_mpd_status_add_song_data (st, "Composer:", composer);
+        mpdisplay_mpd_status_add_song_data (st, "Composer:", composer, -1);
     }
 
     /* artist */
@@ -146,7 +146,7 @@ static void mpdisplay_song_tags_to_status (struct mpd_song *song, struct mpdispl
         i_performer++;
     }
     if (i_performer > 0) {
-        mpdisplay_mpd_status_add_song_data (st, "Performer:", tag->str);
+        mpdisplay_mpd_status_add_song_data (st, "Performer:", tag->str, -1);
     }
 
     g_string_free (tag, true);

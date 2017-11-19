@@ -328,6 +328,25 @@ void WinDisp::update_tags (GList *tlist)
 
         lbl_value->setWordWrap (true);
 
+        if (mpdisplay_options.win_prioscale) {
+            if (e->priority < 0) {
+                QFont font = lbl_name->font();
+
+                int psp = font.pointSize();
+                if (psp <= 0) {
+                    qreal psf = font.pointSizeF();
+                    if (psf > 0) {
+                        font.setPointSizeF ((psf * 2)/3.0);
+                    }
+                } else {
+                    font.setPointSize ((psp * 2)/3);
+                }
+
+                lbl_name->setFont (font);
+                lbl_value->setFont (font);
+            }
+        }
+
         ly_center->addRow (lbl_name, lbl_value);
     }
 }

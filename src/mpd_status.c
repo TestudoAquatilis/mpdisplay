@@ -8,8 +8,9 @@ struct mpdisplay_song_data_entry *mpdisplay_song_data_entry_new ()
     struct mpdisplay_song_data_entry *e = g_slice_new (struct mpdisplay_song_data_entry);
     if (e == NULL) return NULL;
 
-    e->name  = NULL;
-    e->value = NULL;
+    e->name     = NULL;
+    e->value    = NULL;
+    e->priority = 0;
 
     return e;
 }
@@ -99,15 +100,16 @@ void mpdisplay_mpd_status_free (struct mpdisplay_mpd_status **s_p)
     *s_p = NULL;
 }
 
-void mpdisplay_mpd_status_add_song_data (struct mpdisplay_mpd_status *s, const char *name, const char *value)
+void mpdisplay_mpd_status_add_song_data (struct mpdisplay_mpd_status *s, const char *name, const char *value, int priority)
 {
     if (s == NULL) return;
     if (name == NULL) return;
     if (value == NULL) return;
 
     struct mpdisplay_song_data_entry *e = mpdisplay_song_data_entry_new ();
-    e->name  = g_string_chunk_insert (s->song_data_strings, name);
-    e->value = g_string_chunk_insert (s->song_data_strings, value);
+    e->name     = g_string_chunk_insert (s->song_data_strings, name);
+    e->value    = g_string_chunk_insert (s->song_data_strings, value);
+    e->priority = priority;
 
     g_queue_push_tail (s->song_data, e);
 }
@@ -118,8 +120,9 @@ void mpdisplay_mpd_status_add_song_data_entry (struct mpdisplay_mpd_status *s, c
     if (e == NULL) return;
 
     struct mpdisplay_song_data_entry *el = mpdisplay_song_data_entry_new ();
-    el->name  = g_string_chunk_insert (s->song_data_strings, e->name);
-    el->value = g_string_chunk_insert (s->song_data_strings, e->value);
+    el->name     = g_string_chunk_insert (s->song_data_strings, e->name);
+    el->value    = g_string_chunk_insert (s->song_data_strings, e->value);
+    el->priority = e->priority;
 
     g_queue_push_tail (s->song_data, el);
 }
@@ -142,6 +145,7 @@ bool mpdisplay_mpd_status_tags_equal (struct mpdisplay_mpd_status *s1, struct mp
 
         if (strcmp (e1->name,  e2->name)  != 0) return false;
         if (strcmp (e1->value, e2->value) != 0) return false;
+        if (e1->priority != e2->priority) return false;
 
         l1 = l1->next;
         l2 = l2->next;

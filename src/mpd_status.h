@@ -11,6 +11,7 @@ extern "C" {
 struct mpdisplay_song_data_entry {
     const char *name;
     const char *value;
+    int priority;
 };
 
 struct mpdisplay_mpd_status {
@@ -36,7 +37,7 @@ struct mpdisplay_mpd_status *mpdisplay_mpd_status_new  ();
 struct mpdisplay_mpd_status *mpdisplay_mpd_status_copy (struct mpdisplay_mpd_status *s);
 void                         mpdisplay_mpd_status_free (struct mpdisplay_mpd_status **s_p);
 
-void                         mpdisplay_mpd_status_add_song_data       (struct mpdisplay_mpd_status *s, const char *name, const char *value);
+void                         mpdisplay_mpd_status_add_song_data       (struct mpdisplay_mpd_status *s, const char *name, const char *value, int priority);
 void                         mpdisplay_mpd_status_add_song_data_entry (struct mpdisplay_mpd_status *s, const struct mpdisplay_song_data_entry *e);
 bool                         mpdisplay_mpd_status_tags_equal          (struct mpdisplay_mpd_status *s1, struct mpdisplay_mpd_status *s2);
 
