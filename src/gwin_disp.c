@@ -6,6 +6,8 @@
 #include "options.h"
 #include "mpd.h"
 
+enum win_disp_state_val {ST_PLAY, ST_PAUSE, ST_STOP};
+
 /* constructor helpers */
 static GtkWidget *win_disp_create_top_row            (struct win_disp *w);
 static GtkWidget *win_disp_create_bottom_row         (struct win_disp *w);
@@ -15,6 +17,9 @@ static void       win_disp_create_layout             (struct win_disp *w);
 static void       win_disp_create_update_timer       (struct win_disp *w);
 
 /* update helpers */
+static void win_disp_update_playback_state_val (struct win_disp *w, enum win_disp_state_val s);
+static void win_disp_update_playback_state_st  (struct win_disp *w, struct mpdisplay_mpd_status *st);
+
 static void win_disp_update_mpd_status_st (struct win_disp *w, struct mpdisplay_mpd_status *s);
 static void win_disp_update_tags (GtkWidget *widget, struct mpdisplay_mpd_status *s, struct mpdisplay_mpd_status *cs);
 
@@ -81,7 +86,7 @@ static GtkWidget *win_disp_create_top_row (struct win_disp *w)
 
     /* icon */
     w->im_state = gtk_image_new ();
-    /* TODO: update state */
+    win_disp_update_playback_state_val (w, ST_STOP);
 
     /* time bar */
     w->pb_time = gtk_progress_bar_new ();
@@ -188,6 +193,49 @@ static void win_disp_create_update_timer (struct win_disp *w)
     w->tm_update = g_timeout_add (mpdisplay_options.update_interval, win_disp_update_mpd_status, (gpointer) w);
 }
 
+
+/*****************************************************************************************/
+/* update helpers */
+/*****************************************************************************************/
+static void win_disp_update_playback_state_val (struct win_disp *w, enum win_disp_state_val s)
+{
+    const char *st_string_stop  = "media-playback-stop-symbolic";
+    const char *st_string_play  = "media-playback-start-symbolic";
+    const char *st_string_pause = "media-playback-pause-symbolic";
+
+    const char *st_string = st_string_stop;
+
+    if (s == ST_PLAY) {
+        st_string = st_string_play;
+    } else if (s == ST_PAUSE) {
+        st_string = st_string_pause;
+    }
+
+    gtk_image_set_from_icon_name (GTK_IMAGE (w->im_state), st_string, GTK_ICON_SIZE_DIALOG);
+}
+
+static void win_disp_update_playback_state_st (struct win_disp *w, struct mpdisplay_mpd_status *st)
+{
+    if ((st == NULL) || (!st->success)) {
+        win_disp_update_playback_state_val (w, ST_STOP);
+        return;
+    }
+
+    struct mpdisplay_mpd_status *cst = w->mpd_st_current;
+
+    if ((cst != NULL) && (cst->success)) {
+        if ((cst->play == st->play) && (cst->pause == st->pause)) return;
+    }
+
+    if (st->play) {
+        win_disp_update_playback_state_val (w, ST_PLAY);
+    } else if (st->pause) {
+        win_disp_update_playback_state_val (w, ST_PAUSE);
+    } else {
+        win_disp_update_playback_state_val (w, ST_STOP);
+    }
+}
+
 static gboolean win_disp_update_mpd_status (gpointer data_p)
 {
     struct win_disp *w = (struct win_disp *) data_p;
@@ -220,15 +268,7 @@ static void win_disp_update_mpd_status_st (struct win_disp *w, struct mpdisplay_
     struct mpdisplay_mpd_status *cs = w->mpd_st_current;
 
     /* play/pause/stop icon */
-    if ((cs == NULL) || (cs->play != s->play) || (cs->pause != s->pause)) {
-        if (s->play) {
-            gtk_image_set_from_icon_name (GTK_IMAGE (w->im_state), "media-playback-start-symbolic", GTK_ICON_SIZE_DIALOG);
-        } else if (s->pause) {
-            gtk_image_set_from_icon_name (GTK_IMAGE (w->im_state), "media-playback-pause-symbolic", GTK_ICON_SIZE_DIALOG);
-        } else {
-            gtk_image_set_from_icon_name (GTK_IMAGE (w->im_state), "media-playback-stop-symbolic",  GTK_ICON_SIZE_DIALOG);
-        }
-    }
+    win_disp_update_playback_state_st (w, s);
 
     /* playback time */
     if ((cs == NULL) || (cs->seconds_elapsed != s->seconds_elapsed) || (cs->seconds_total != s->seconds_total)) {
