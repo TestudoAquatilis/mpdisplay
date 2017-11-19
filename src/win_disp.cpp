@@ -189,7 +189,7 @@ void WinDisp::update_playback_state (struct mpdisplay_mpd_status *st)
     if (st->play) {
         update_playback_state (ST_PLAY);
     } else if (st->pause) {
-        update_playback_state (ST_PLAY);
+        update_playback_state (ST_PAUSE);
     } else {
         update_playback_state (ST_STOP);
     }
