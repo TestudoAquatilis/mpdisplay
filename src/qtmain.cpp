@@ -18,6 +18,10 @@ int main(int argc, char *argv[])
         win_disp.show();
     }
 
+    if (!mpdisplay_options.win_cursor) {
+        app.setOverrideCursor (Qt::BlankCursor);
+    }
+
     int result = app.exec();
 
     mpdisplay_mpd_free ();
