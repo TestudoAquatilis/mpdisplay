@@ -2,8 +2,18 @@
 #include <glib.h>
 
 #include "win_disp.h"
+#include "options.h"
+#include "mpd.h"
 
 WinDisp::WinDisp()
+{
+    mpd_st_current = NULL;
+    create_layout ();
+    create_update_timer ();
+    tm_update->start ();
+}
+
+void WinDisp::create_layout ()
 {
     QWidget *top_row   = create_top_row ();
     QWidget *top_line  = create_new_separator_line ();
@@ -122,6 +132,16 @@ QWidget *WinDisp::create_new_separator_line ()
     return result;
 }
 
+void WinDisp::create_update_timer ()
+{
+    tm_update = new QTimer (this);
+
+    tm_update->setSingleShot (false);
+    tm_update->setInterval (mpdisplay_options.update_interval);
+
+    connect (tm_update, SIGNAL (timeout()), this, SLOT (update_mpd_status()));
+}
+
 void WinDisp::update_playback_state (StateVal s)
 {
     const char *st_string_stop  = "media-playback-stop";
@@ -203,4 +223,29 @@ void WinDisp::update_tags_nocon ()
     QLabel *lbl_dummy = new QLabel ("...");
 
     ly_center->addRow (lbl_msg, lbl_dummy);
+}
+
+void WinDisp::update_mpd_status (struct mpdisplay_mpd_status *st_new)
+{
+    printf ("DEBUG.... mpd status update\n");
+
+    mpdisplay_mpd_status_free (&st_new);
+}
+
+void WinDisp::update_mpd_status ()
+{
+#ifdef DEBUG_NOMPD
+    /* generate dummy data */
+    struct mpdisplay_mpd_status *st = mpdisplay_mpd_status_new ();
+
+    st->success = true;
+    mpdisplay_mpd_status_add_song_data (st, "tag1", "value1");
+    mpdisplay_mpd_status_add_song_data (st, "tag2", "value2 with more content");
+    mpdisplay_mpd_status_add_song_data (st, "tag3", "value3 with more so much content that it should be necessary to wrap it somewhere");
+#else
+    /* get status */
+    struct mpdisplay_mpd_status *st = mpdisplay_mpd_get_status ();
+#endif
+
+    update_mpd_status (st);
 }
