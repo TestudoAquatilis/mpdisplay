@@ -3,4 +3,4 @@
 src/obj/*
 src/mpdisplay
 src/*.cfg
-*.moc.cpp
+src/moc/*
