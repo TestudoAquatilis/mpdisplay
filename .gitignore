@@ -1,6 +1,6 @@
 .*.sw*
 *.vim
 src/obj/*
-src/mpdisplay
+src/*mpdisplay
 src/*.cfg
 src/moc/*

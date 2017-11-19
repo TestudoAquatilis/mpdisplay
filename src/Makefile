@@ -3,15 +3,15 @@ CXX=g++
 LD=$(CC)
 
 # define version: Qt, gtk
-VERSION=Qt
+VARIANT?=Qt
 
 # libs to include
 LIBS=glib-2.0 libmpdclient
-ifeq ($(VERSION),Qt)
+ifeq ($(VARIANT),Qt)
 LIBS+=Qt5Widgets
 LD=$(CXX)
 endif
-ifeq ($(VERSION),gtk)
+ifeq ($(VARIANT),gtk)
 LIBS+=gtk+-3.0
 endif
 
@@ -21,13 +21,13 @@ SOURCES= \
 	mpd.c \
 	mpd_status.c
 
-ifeq ($(VERSION),gtk)
+ifeq ($(VARIANT),gtk)
 SOURCES+= \
 	gtkmain.c \
 	disp_window.c
 endif
 
-ifeq ($(VERSION),Qt)
+ifeq ($(VARIANT),Qt)
 SOURCES+= \
 	qtmain.cpp \
 	win_disp.cpp
@@ -37,7 +37,12 @@ QTW_HEADERS= \
 endif
 
 # executable name
-EXECUTABLE=mpdisplay
+ifeq ($(VARIANT),Qt)
+EXECUTABLE=qmpdisplay
+endif
+ifeq ($(VARIANT),gtk)
+EXECUTABLE=gmpdisplay
+endif
 
 # flags
 OPTFLAGS=-O2
