@@ -17,9 +17,9 @@ class WinDisp: public QMainWindow {
         QProgressBar *pb_volume;
         QFrame       *fr_center;
         QFormLayout  *ly_center;
-        QToolButton  *bt_single;
-        QToolButton  *bt_repeat;
-        QToolButton  *bt_shuffle;
+        QToolButton  *tb_single;
+        QToolButton  *tb_repeat;
+        QToolButton  *tb_shuffle;
         QTimer       *tm_update;
 
         /* status */

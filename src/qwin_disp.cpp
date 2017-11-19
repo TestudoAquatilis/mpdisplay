@@ -83,19 +83,19 @@ QWidget *WinDisp::create_bottom_row ()
     QSize qicon_size = QSize (icon_size, icon_size);
 
     /* tool buttons */
-    bt_single  = new QToolButton;
-    bt_repeat  = new QToolButton;
-    bt_shuffle = new QToolButton;
+    tb_single  = new QToolButton;
+    tb_repeat  = new QToolButton;
+    tb_shuffle = new QToolButton;
 
-    bt_single->setText ("1");
-    bt_repeat->setIcon (QIcon::fromTheme ("media-playlist-repeat-symbolic"));
-    bt_shuffle->setIcon (QIcon::fromTheme ("media-playlist-shuffle-symbolic"));
-    bt_repeat->setIconSize (qicon_size);
-    bt_shuffle->setIconSize (qicon_size);
+    tb_single->setText ("1");
+    tb_repeat->setIcon (QIcon::fromTheme ("media-playlist-repeat-symbolic"));
+    tb_shuffle->setIcon (QIcon::fromTheme ("media-playlist-shuffle-symbolic"));
+    tb_repeat->setIconSize (qicon_size);
+    tb_shuffle->setIconSize (qicon_size);
 
-    bt_single->setCheckable(true);
-    bt_repeat->setCheckable(true);
-    bt_shuffle->setCheckable(true);
+    tb_single->setCheckable(true);
+    tb_repeat->setCheckable(true);
+    tb_shuffle->setCheckable(true);
 
     /* volume icon */
     QLabel *lb_volume = new QLabel;
@@ -112,9 +112,9 @@ QWidget *WinDisp::create_bottom_row ()
 
     /* put everything together */
     QHBoxLayout *layout = new QHBoxLayout;
-    layout->addWidget (bt_single, 0);
-    layout->addWidget (bt_repeat, 0);
-    layout->addWidget (bt_shuffle, 0);
+    layout->addWidget (tb_single, 0);
+    layout->addWidget (tb_repeat, 0);
+    layout->addWidget (tb_shuffle, 0);
     layout->addStretch (1);
     layout->addWidget (lb_volume, 0);
     layout->addWidget (pb_volume, 0);
@@ -202,9 +202,9 @@ void WinDisp::update_playback_state (struct mpdisplay_mpd_status *st)
 
 void WinDisp::update_playlist_state (bool single, bool repeat, bool shuffle)
 {
-    bt_single->setChecked (single);
-    bt_repeat->setChecked (repeat);
-    bt_shuffle->setChecked (shuffle);
+    tb_single->setChecked (single);
+    tb_repeat->setChecked (repeat);
+    tb_shuffle->setChecked (shuffle);
 }
 
 void WinDisp::update_playlist_state (struct mpdisplay_mpd_status *st)

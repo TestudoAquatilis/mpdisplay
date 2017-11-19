@@ -19,16 +19,16 @@ struct win_disp *win_disp_new ()
 
     /*****************/
     /* init pointers */
-    w->current_status = NULL;
+    w->mpd_st_current = NULL;
 
-    w->win_main       = NULL;
-    w->img_play       = NULL;
-    w->pbar_time      = NULL;
-    w->pbar_volume    = NULL;
-    w->tb_shuffle     = NULL;
-    w->tb_repeat      = NULL;
-    w->tb_single      = NULL;
-    w->frame_song     = NULL;
+    w->win_main   = NULL;
+    w->im_state   = NULL;
+    w->pb_time    = NULL;
+    w->pb_volume  = NULL;
+    w->tb_shuffle = NULL;
+    w->tb_repeat  = NULL;
+    w->tb_single  = NULL;
+    w->fr_center  = NULL;
 
     /* temporaryly stored widgets */
     GtkWidget *vbox0       = NULL;
@@ -43,23 +43,23 @@ struct win_disp *win_disp_new ()
 
     /***************/
     /* gtk widgets */
-    w->win_main    = gtk_window_new (GTK_WINDOW_TOPLEVEL);
-    vbox0          = gtk_box_new (GTK_ORIENTATION_VERTICAL, 1);
-    vbox0_s0       = gtk_separator_new (GTK_ORIENTATION_HORIZONTAL);
-    vbox0_s1       = gtk_separator_new (GTK_ORIENTATION_HORIZONTAL);
-    hbox1p         = gtk_box_new (GTK_ORIENTATION_HORIZONTAL, 1);
-    w->img_play    = gtk_image_new_from_icon_name ("media-playback-stop-symbolic", GTK_ICON_SIZE_DIALOG);
-    w->pbar_time   = gtk_progress_bar_new ();
-    w->pbar_volume = gtk_progress_bar_new ();
-    hbox1s         = gtk_box_new (GTK_ORIENTATION_HORIZONTAL, 1);
-    w->tb_single   = gtk_toggle_button_new ();
-    w->tb_shuffle  = gtk_toggle_button_new ();
-    w->tb_repeat   = gtk_toggle_button_new ();
-    lbl_single     = gtk_label_new ("1");
-    img_shuffle    = gtk_image_new_from_icon_name ("media-playlist-shuffle-symbolic", GTK_ICON_SIZE_SMALL_TOOLBAR);
-    img_repeat     = gtk_image_new_from_icon_name ("media-playlist-repeat-symbolic", GTK_ICON_SIZE_SMALL_TOOLBAR);
-    img_volume     = gtk_image_new_from_icon_name ("multimedia-volume-control-symbolic", GTK_ICON_SIZE_SMALL_TOOLBAR);
-    w->frame_song  = gtk_frame_new (NULL);
+    w->win_main   = gtk_window_new (GTK_WINDOW_TOPLEVEL);
+    vbox0         = gtk_box_new (GTK_ORIENTATION_VERTICAL, 1);
+    vbox0_s0      = gtk_separator_new (GTK_ORIENTATION_HORIZONTAL);
+    vbox0_s1      = gtk_separator_new (GTK_ORIENTATION_HORIZONTAL);
+    hbox1p        = gtk_box_new (GTK_ORIENTATION_HORIZONTAL, 1);
+    w->im_state   = gtk_image_new_from_icon_name ("media-playback-stop-symbolic", GTK_ICON_SIZE_DIALOG);
+    w->pb_time    = gtk_progress_bar_new ();
+    w->pb_volume  = gtk_progress_bar_new ();
+    hbox1s        = gtk_box_new (GTK_ORIENTATION_HORIZONTAL, 1);
+    w->tb_single  = gtk_toggle_button_new ();
+    w->tb_shuffle = gtk_toggle_button_new ();
+    w->tb_repeat  = gtk_toggle_button_new ();
+    lbl_single    = gtk_label_new ("1");
+    img_shuffle   = gtk_image_new_from_icon_name ("media-playlist-shuffle-symbolic", GTK_ICON_SIZE_SMALL_TOOLBAR);
+    img_repeat    = gtk_image_new_from_icon_name ("media-playlist-repeat-symbolic", GTK_ICON_SIZE_SMALL_TOOLBAR);
+    img_volume    = gtk_image_new_from_icon_name ("multimedia-volume-control-symbolic", GTK_ICON_SIZE_SMALL_TOOLBAR);
+    w->fr_center  = gtk_frame_new (NULL);
 
     /************/
     /* settings */
@@ -73,34 +73,34 @@ struct win_disp *win_disp_new ()
         gtk_window_fullscreen (GTK_WINDOW (w->win_main));
     }
 
-    gtk_progress_bar_set_fraction  (GTK_PROGRESS_BAR (w->pbar_time), 0.0);
-    gtk_progress_bar_set_text      (GTK_PROGRESS_BAR (w->pbar_time), "");
-    gtk_progress_bar_set_show_text (GTK_PROGRESS_BAR (w->pbar_time), true);
+    gtk_progress_bar_set_fraction  (GTK_PROGRESS_BAR (w->pb_time), 0.0);
+    gtk_progress_bar_set_text      (GTK_PROGRESS_BAR (w->pb_time), "");
+    gtk_progress_bar_set_show_text (GTK_PROGRESS_BAR (w->pb_time), true);
 
-    gtk_progress_bar_set_fraction  (GTK_PROGRESS_BAR (w->pbar_volume), 0.0);
+    gtk_progress_bar_set_fraction  (GTK_PROGRESS_BAR (w->pb_volume), 0.0);
 
-    gtk_frame_set_shadow_type (GTK_FRAME (w->frame_song), GTK_SHADOW_NONE);
+    gtk_frame_set_shadow_type (GTK_FRAME (w->fr_center), GTK_SHADOW_NONE);
 
     /***************/
     /* arrangement */
-    gtk_box_pack_start (GTK_BOX (hbox1p), w->img_play,  false, true, 0);
-    gtk_box_pack_start (GTK_BOX (hbox1p), w->pbar_time, true,  true, 0);
+    gtk_box_pack_start (GTK_BOX (hbox1p), w->im_state,  false, true, 0);
+    gtk_box_pack_start (GTK_BOX (hbox1p), w->pb_time, true,  true, 0);
 
     gtk_container_add (GTK_CONTAINER (w->tb_single),  lbl_single);
     gtk_container_add (GTK_CONTAINER (w->tb_shuffle), img_shuffle);
     gtk_container_add (GTK_CONTAINER (w->tb_repeat),  img_repeat);
 
-    gtk_box_pack_start (GTK_BOX (hbox1s), w->tb_single,   false, true, 0);
-    gtk_box_pack_start (GTK_BOX (hbox1s), w->tb_shuffle,  false, true, 0);
-    gtk_box_pack_start (GTK_BOX (hbox1s), w->tb_repeat,   false, true, 0);
-    gtk_box_pack_end   (GTK_BOX (hbox1s), w->pbar_volume, false, true, 0);
-    gtk_box_pack_end   (GTK_BOX (hbox1s), img_volume,     false, true, 0);
+    gtk_box_pack_start (GTK_BOX (hbox1s), w->tb_single,  false, true, 0);
+    gtk_box_pack_start (GTK_BOX (hbox1s), w->tb_shuffle, false, true, 0);
+    gtk_box_pack_start (GTK_BOX (hbox1s), w->tb_repeat,  false, true, 0);
+    gtk_box_pack_end   (GTK_BOX (hbox1s), w->pb_volume,  false, true, 0);
+    gtk_box_pack_end   (GTK_BOX (hbox1s), img_volume,    false, true, 0);
 
-    gtk_box_pack_start (GTK_BOX (vbox0), hbox1p,        false, true, 0);
-    gtk_box_pack_start (GTK_BOX (vbox0), vbox0_s0,      false, true, 0);
-    gtk_box_pack_start (GTK_BOX (vbox0), w->frame_song, true,  true, 0);
-    gtk_box_pack_start (GTK_BOX (vbox0), vbox0_s1,      false, true, 0);
-    gtk_box_pack_start (GTK_BOX (vbox0), hbox1s,        false, true, 0);
+    gtk_box_pack_start (GTK_BOX (vbox0), hbox1p,       false, true, 0);
+    gtk_box_pack_start (GTK_BOX (vbox0), vbox0_s0,     false, true, 0);
+    gtk_box_pack_start (GTK_BOX (vbox0), w->fr_center, true,  true, 0);
+    gtk_box_pack_start (GTK_BOX (vbox0), vbox0_s1,     false, true, 0);
+    gtk_box_pack_start (GTK_BOX (vbox0), hbox1s,       false, true, 0);
 
     gtk_container_add (GTK_CONTAINER (w->win_main), vbox0);
 
@@ -120,7 +120,7 @@ void win_disp_free (struct win_disp **w_p)
 
     if (w == NULL) return;
 
-    mpdisplay_mpd_status_free (&(w->current_status));
+    mpdisplay_mpd_status_free (&(w->mpd_st_current));
 
     g_slice_free (struct win_disp, w);
     *w_p = NULL;
@@ -136,18 +136,18 @@ void win_disp_show (struct win_disp *w)
 void win_disp_update (struct win_disp *w, struct mpdisplay_mpd_status *s)
 {
     if ((s == NULL) || (w == NULL)) return;
-    struct mpdisplay_mpd_status *cs = w->current_status;
+    struct mpdisplay_mpd_status *cs = w->mpd_st_current;
 
     if (w->done) return;
 
     /* play/pause/stop icon */
     if ((cs == NULL) || (cs->play != s->play) || (cs->pause != s->pause)) {
         if (s->play) {
-            gtk_image_set_from_icon_name (GTK_IMAGE (w->img_play), "media-playback-start-symbolic", GTK_ICON_SIZE_DIALOG);
+            gtk_image_set_from_icon_name (GTK_IMAGE (w->im_state), "media-playback-start-symbolic", GTK_ICON_SIZE_DIALOG);
         } else if (s->pause) {
-            gtk_image_set_from_icon_name (GTK_IMAGE (w->img_play), "media-playback-pause-symbolic", GTK_ICON_SIZE_DIALOG);
+            gtk_image_set_from_icon_name (GTK_IMAGE (w->im_state), "media-playback-pause-symbolic", GTK_ICON_SIZE_DIALOG);
         } else {
-            gtk_image_set_from_icon_name (GTK_IMAGE (w->img_play), "media-playback-stop-symbolic", GTK_ICON_SIZE_DIALOG);
+            gtk_image_set_from_icon_name (GTK_IMAGE (w->im_state), "media-playback-stop-symbolic",  GTK_ICON_SIZE_DIALOG);
         }
     }
 
@@ -180,10 +180,10 @@ void win_disp_update (struct win_disp *w, struct mpdisplay_mpd_status *s)
             }
         }
 
-        gtk_progress_bar_set_fraction  (GTK_PROGRESS_BAR (w->pbar_time), pb_progress);
-        gtk_progress_bar_set_text      (GTK_PROGRESS_BAR (w->pbar_time), st_progress->str);
+        gtk_progress_bar_set_fraction  (GTK_PROGRESS_BAR (w->pb_time), pb_progress);
+        gtk_progress_bar_set_text      (GTK_PROGRESS_BAR (w->pb_time), st_progress->str);
 
-        if (pb_pulse) gtk_progress_bar_pulse (GTK_PROGRESS_BAR (w->pbar_time));
+        if (pb_pulse) gtk_progress_bar_pulse (GTK_PROGRESS_BAR (w->pb_time));
 
         g_string_free (st_progress, true);
     }
@@ -205,14 +205,14 @@ void win_disp_update (struct win_disp *w, struct mpdisplay_mpd_status *s)
             }
         }
 
-        gtk_progress_bar_set_fraction (GTK_PROGRESS_BAR (w->pbar_volume), volume);
+        gtk_progress_bar_set_fraction (GTK_PROGRESS_BAR (w->pb_volume), volume);
     }
 
     /* song data */
-    song_data_update (w->frame_song, s, cs);
+    song_data_update (w->fr_center, s, cs);
 
-    mpdisplay_mpd_status_free (&(w->current_status));
-    w->current_status = mpdisplay_mpd_status_copy (s);
+    mpdisplay_mpd_status_free (&(w->mpd_st_current));
+    w->mpd_st_current = mpdisplay_mpd_status_copy (s);
 }
 
 static void song_data_update (GtkWidget *sframe, struct mpdisplay_mpd_status *s, struct mpdisplay_mpd_status *cs)
@@ -254,7 +254,7 @@ static void song_data_update (GtkWidget *sframe, struct mpdisplay_mpd_status *s,
             gtk_widget_set_halign (label_value, GTK_ALIGN_FILL);
             gtk_widget_set_valign (label_value, GTK_ALIGN_START);
 
-            gtk_label_set_line_wrap      (GTK_LABEL (label_value), true);
+            gtk_label_set_line_wrap (GTK_LABEL (label_value), true);
 
             gtk_grid_attach (GTK_GRID (grid), label_name,  0, i, 1, 1);
             gtk_grid_attach (GTK_GRID (grid), label_value, 1, i, 1, 1);

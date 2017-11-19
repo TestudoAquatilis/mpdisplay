@@ -13,15 +13,15 @@ struct win_disp {
     /* main window */
     GtkWidget *win_main;
     /* important widgets */
-    GtkWidget *img_play;
-    GtkWidget *pbar_time;
-    GtkWidget *pbar_volume;
+    GtkWidget *im_state;
+    GtkWidget *pb_time;
+    GtkWidget *pb_volume;
+    GtkWidget *fr_center;
     GtkWidget *tb_single;
     GtkWidget *tb_shuffle;
     GtkWidget *tb_repeat;
-    GtkWidget *frame_song;
     /* status */
-    struct mpdisplay_mpd_status *current_status;
+    struct mpdisplay_mpd_status *mpd_st_current;
 };
 
 struct win_disp *win_disp_new    ();
