@@ -16,6 +16,7 @@ struct win_disp {
     GtkWidget *pb_time;
     GtkWidget *pb_volume;
     GtkWidget *fr_center;
+    GtkWidget *ly_center;
     GtkWidget *tb_single;
     GtkWidget *tb_shuffle;
     GtkWidget *tb_repeat;

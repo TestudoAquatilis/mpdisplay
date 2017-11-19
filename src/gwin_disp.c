@@ -25,9 +25,11 @@ static void win_disp_update_volume_int          (struct win_disp *w, int volume)
 static void win_disp_update_volume_st           (struct win_disp *w, struct mpdisplay_mpd_status *st);
 static void win_disp_update_time_int            (struct win_disp *w, int total_s, int elapsed_s);
 static void win_disp_update_time_st             (struct win_disp *w, struct mpdisplay_mpd_status *st);
-
-static void win_disp_update_mpd_status_st (struct win_disp *w, struct mpdisplay_mpd_status *s);
-static void win_disp_update_tags (GtkWidget *widget, struct mpdisplay_mpd_status *s, struct mpdisplay_mpd_status *cs);
+static void win_disp_clear_tags                 (struct win_disp *w);
+static void win_disp_update_tags_nocon          (struct win_disp *w);
+static void win_disp_update_tags_glist          (struct win_disp *w, GList *tlist);
+static void win_disp_update_tags_st             (struct win_disp *w, struct mpdisplay_mpd_status *st);
+static void win_disp_update_mpd_status_st       (struct win_disp *w, struct mpdisplay_mpd_status *st);
 
 /* signal handler declaration */
 static void win_disp_close (GtkWidget *widget, gpointer data);
@@ -51,6 +53,7 @@ struct win_disp *win_disp_new ()
     w->tb_repeat  = NULL;
     w->tb_shuffle = NULL;
     w->fr_center  = NULL;
+    w->ly_center  = NULL;
     w->tm_update  = -1;
 
     win_disp_create_layout (w);
@@ -154,7 +157,7 @@ static GtkWidget *win_disp_create_center_frame (struct win_disp *w)
 
     gtk_frame_set_shadow_type (GTK_FRAME (w->fr_center), GTK_SHADOW_NONE);
 
-    /* TODO: update */
+    win_disp_update_tags_nocon (w);
 
     return w->fr_center;
 }
@@ -342,6 +345,115 @@ static void win_disp_update_time_st (struct win_disp *w, struct mpdisplay_mpd_st
     win_disp_update_time_int (w, st->seconds_total, st->seconds_elapsed);
 }
 
+static void win_disp_clear_tags (struct win_disp *w)
+{
+    GtkWidget *cen_frame = w->fr_center;
+
+    GtkWidget *old_child = gtk_bin_get_child (GTK_BIN (cen_frame));
+    if (old_child != NULL) {
+        gtk_container_remove (GTK_CONTAINER (cen_frame), GTK_WIDGET (old_child));
+    }
+
+    /* add grid */
+    GtkWidget *grid = gtk_grid_new ();
+    gtk_widget_set_halign (grid, GTK_ALIGN_START);
+    gtk_widget_set_valign (grid, GTK_ALIGN_START);
+
+    gtk_grid_set_row_spacing     (GTK_GRID (grid), 5);
+    gtk_grid_set_column_spacing  (GTK_GRID (grid), 5);
+    gtk_widget_set_margin_start  (grid, 5);
+    gtk_widget_set_margin_end    (grid, 5);
+    gtk_widget_set_margin_top    (grid, 5);
+    gtk_widget_set_margin_bottom (grid, 5);
+
+    gtk_grid_set_column_homogeneous (GTK_GRID (grid), false);
+    gtk_grid_set_row_homogeneous    (GTK_GRID (grid), false);
+
+    gtk_container_add (GTK_CONTAINER (cen_frame), grid);
+
+    w->ly_center = grid;
+}
+
+static void win_disp_update_tags_nocon (struct win_disp *w)
+{
+    win_disp_clear_tags (w);
+    GtkWidget *grid = w->ly_center;
+
+    GtkWidget *label   = gtk_label_new ("not connected ...");
+    GtkWidget *spinner = gtk_spinner_new ();
+
+    gtk_widget_set_halign (label, GTK_ALIGN_START);
+    gtk_widget_set_valign (label, GTK_ALIGN_START);
+
+    gtk_grid_attach (GTK_GRID (grid), spinner, 0, 0, 1, 1);
+    gtk_grid_attach (GTK_GRID (grid), label,   1, 0, 1, 1);
+
+    gtk_spinner_start (GTK_SPINNER (spinner));
+
+    gtk_widget_show_all (w->fr_center);
+}
+
+static void win_disp_update_tags_glist (struct win_disp *w, GList *tlist)
+{
+    win_disp_clear_tags (w);
+    GtkWidget *grid = w->ly_center;
+
+    int i = 0;
+    for (GList *li = tlist; li != NULL; li = li->next, i++) {
+        struct mpdisplay_song_data_entry *e = (struct mpdisplay_song_data_entry *) li->data;
+
+        GtkWidget *label_name  = gtk_label_new (e->name);
+        GtkWidget *label_value = gtk_label_new (e->value);
+
+        gtk_widget_set_halign (label_name, GTK_ALIGN_START);
+        gtk_widget_set_valign (label_name, GTK_ALIGN_START);
+
+        gtk_widget_set_halign (label_value, GTK_ALIGN_FILL);
+        gtk_widget_set_valign (label_value, GTK_ALIGN_START);
+
+        gtk_label_set_line_wrap (GTK_LABEL (label_value), true);
+
+        gtk_grid_attach (GTK_GRID (grid), label_name,  0, i, 1, 1);
+        gtk_grid_attach (GTK_GRID (grid), label_value, 1, i, 1, 1);
+    }
+
+    gtk_widget_show_all (w->fr_center);
+}
+
+static void win_disp_update_tags_st (struct win_disp *w, struct mpdisplay_mpd_status *st)
+{
+    if ((st == NULL) || (!st->success)) {
+        win_disp_update_tags_nocon (w);
+        return;
+    }
+
+    struct mpdisplay_mpd_status *cst = w->mpd_st_current;
+
+    if ((cst != NULL) && (cst->success)) {
+        if (mpdisplay_mpd_status_tags_equal (cst, st)) return;
+    }
+
+    win_disp_update_tags_glist (w, st->song_data->head);
+}
+
+
+static void win_disp_update_mpd_status_st (struct win_disp *w, struct mpdisplay_mpd_status *st)
+{
+    if (w == NULL) return;
+
+    win_disp_update_playback_state_st (w, st);
+    win_disp_update_playlist_state_st (w, st);
+    win_disp_update_volume_st (w, st);
+    win_disp_update_time_st (w, st);
+    win_disp_update_tags_st (w, st);
+
+    mpdisplay_mpd_status_free (&(w->mpd_st_current));
+    w->mpd_st_current = mpdisplay_mpd_status_copy (st);
+}
+
+/*****************************************************************************************/
+/* handlers */
+/*****************************************************************************************/
 static gboolean win_disp_update_mpd_status (gpointer data_p)
 {
     struct win_disp *w = (struct win_disp *) data_p;
@@ -368,97 +480,6 @@ static gboolean win_disp_update_mpd_status (gpointer data_p)
     return true;
 }
 
-static void win_disp_update_mpd_status_st (struct win_disp *w, struct mpdisplay_mpd_status *s)
-{
-    if ((s == NULL) || (w == NULL)) return;
-    struct mpdisplay_mpd_status *cs = w->mpd_st_current;
-
-    /* play/pause/stop icon */
-    win_disp_update_playback_state_st (w, s);
-
-    /* playback time */
-    win_disp_update_time_st (w, s);
-
-    /* playlist status */
-    win_disp_update_playlist_state_st (w, s);
-
-    /* volume */
-    win_disp_update_volume_st (w, s);
-
-    /* song data */
-    win_disp_update_tags (w->fr_center, s, cs);
-
-    mpdisplay_mpd_status_free (&(w->mpd_st_current));
-    w->mpd_st_current = mpdisplay_mpd_status_copy (s);
-}
-
-static void win_disp_update_tags (GtkWidget *sframe, struct mpdisplay_mpd_status *s, struct mpdisplay_mpd_status *cs)
-{
-    if ((sframe == NULL) || (s == NULL)) return;
-    if ((cs != NULL) && (!cs->success) && mpdisplay_mpd_status_tags_equal (s, cs)) return;
-
-    /* remove old children */
-    if (!((s->success) || (cs == NULL) || (cs->success))) return;
-
-    GtkWidget *old_child = gtk_bin_get_child (GTK_BIN (sframe));
-    if (old_child != NULL) {
-        gtk_container_remove (GTK_CONTAINER (sframe), GTK_WIDGET (old_child));
-    }
-
-    /* add grid */
-    GtkWidget *grid = gtk_grid_new ();
-    gtk_widget_set_halign (grid, GTK_ALIGN_START);
-    gtk_widget_set_valign (grid, GTK_ALIGN_START);
-
-    gtk_grid_set_row_spacing     (GTK_GRID (grid), 5);
-    gtk_grid_set_column_spacing  (GTK_GRID (grid), 5);
-    gtk_widget_set_margin_start  (grid, 5);
-    gtk_widget_set_margin_end    (grid, 5);
-    gtk_widget_set_margin_top    (grid, 5);
-    gtk_widget_set_margin_bottom (grid, 5);
-
-    if (s->success) {
-        int i = 0;
-        for (GList *li = s->song_data->head; li != NULL; li = li->next, i++) {
-            struct mpdisplay_song_data_entry *e = (struct mpdisplay_song_data_entry *) li->data;
-
-            GtkWidget *label_name  = gtk_label_new (e->name);
-            GtkWidget *label_value = gtk_label_new (e->value);
-
-            gtk_widget_set_halign (label_name, GTK_ALIGN_START);
-            gtk_widget_set_valign (label_name, GTK_ALIGN_START);
-
-            gtk_widget_set_halign (label_value, GTK_ALIGN_FILL);
-            gtk_widget_set_valign (label_value, GTK_ALIGN_START);
-
-            gtk_label_set_line_wrap (GTK_LABEL (label_value), true);
-
-            gtk_grid_attach (GTK_GRID (grid), label_name,  0, i, 1, 1);
-            gtk_grid_attach (GTK_GRID (grid), label_value, 1, i, 1, 1);
-        }
-    } else {
-        if ((cs == NULL) || (cs->success)) {
-            GtkWidget *label = gtk_label_new ("not connected ...");
-            GtkWidget *spinner = gtk_spinner_new ();
-
-            gtk_widget_set_halign (label, GTK_ALIGN_START);
-            gtk_widget_set_valign (label, GTK_ALIGN_START);
-
-            gtk_grid_attach (GTK_GRID (grid), spinner, 0, 0, 1, 1);
-            gtk_grid_attach (GTK_GRID (grid), label, 1, 0, 1, 1);
-
-            gtk_spinner_start (GTK_SPINNER (spinner));
-        }
-    }
-
-    gtk_grid_set_column_homogeneous (GTK_GRID (grid), false);
-    gtk_grid_set_row_homogeneous (GTK_GRID (grid), false);
-
-    gtk_container_add (GTK_CONTAINER (sframe), grid);
-    gtk_widget_show_all (sframe);
-}
-
-/* signal handlers */
 static void win_disp_close (GtkWidget *widget, gpointer data)
 {
     struct win_disp* w = (struct win_disp*) data;
