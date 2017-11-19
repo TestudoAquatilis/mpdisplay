@@ -3,6 +3,10 @@
 
 #include <stdbool.h>
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 struct _mpdisplay_options {
     const char  *config_file;
 
@@ -24,5 +28,9 @@ struct _mpdisplay_options {
 extern struct _mpdisplay_options mpdisplay_options;
 
 bool mpdisplay_parse_options (int *argc, char ***argv);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif

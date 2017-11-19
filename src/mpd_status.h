@@ -4,6 +4,10 @@
 #include <stdbool.h>
 #include <glib.h>
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 struct mpdisplay_song_data_entry {
     const char *name;
     const char *value;
@@ -36,5 +40,8 @@ void                         mpdisplay_mpd_status_add_song_data       (struct mp
 void                         mpdisplay_mpd_status_add_song_data_entry (struct mpdisplay_mpd_status *s, const struct mpdisplay_song_data_entry *e);
 bool                         mpdisplay_mpd_status_tags_equal          (struct mpdisplay_mpd_status *s1, struct mpdisplay_mpd_status *s2);
 
+#ifdef __cplusplus
+}
+#endif
 
 #endif

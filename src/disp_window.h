@@ -4,6 +4,10 @@
 #include <gtk/gtk.h>
 #include "mpd_status.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 struct disp_window {
     bool done;
     /* main window */
@@ -24,5 +28,9 @@ struct disp_window *disp_window_new    ();
 void                disp_window_free   (struct disp_window **w_p);
 void                disp_window_show   (struct disp_window *w);
 void                disp_window_update (struct disp_window *w, struct mpdisplay_mpd_status *s);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif
