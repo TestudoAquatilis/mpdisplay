@@ -19,6 +19,9 @@ struct _mpdisplay_options {
     int          win_height;
     bool         win_fullscreen;
 
+    int          icon_size_playback;
+    int          icon_size_toolbar;
+
     int          update_interval;
 
     const char  *progname;

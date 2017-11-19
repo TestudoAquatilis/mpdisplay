@@ -6,18 +6,20 @@
 #include <string.h>
 
 struct _mpdisplay_options mpdisplay_options = {
-    .config_file       = NULL,
-    .mpd_hostname      = "localhost",
-    .mpd_password      = NULL,
-    .mpd_port          = 6600,
-    .mpd_maxtries      = 2,
-    .win_width         = -1,
-    .win_height        = -1,
-    .win_fullscreen    = false,
-    .update_interval   = 500,
-    .progname          = "mpdisplay",
-    .verbose           = false,
-    .debug             = false
+    .config_file        = NULL,
+    .mpd_hostname       = "localhost",
+    .mpd_password       = NULL,
+    .mpd_port           = 6600,
+    .mpd_maxtries       = 2,
+    .win_width          = -1,
+    .win_height         = -1,
+    .win_fullscreen     = false,
+    .icon_size_toolbar  = -1,
+    .icon_size_playback = -1,
+    .update_interval    = 500,
+    .progname           = "mpdisplay",
+    .verbose            = false,
+    .debug              = false
 };
 
 struct option_file_data {
@@ -43,14 +45,16 @@ static GOptionEntry option_entries [] = {
 };
 
 static struct option_file_data cfg_file_entries [] = {
-    {"mpd",     "hostname",     G_OPTION_ARG_STRING,   &(mpdisplay_options.mpd_hostname)},
-    {"mpd",     "password",     G_OPTION_ARG_STRING,   &(mpdisplay_options.mpd_password)},
-    {"mpd",     "port",         G_OPTION_ARG_INT,      &(mpdisplay_options.mpd_port)},
-    {"mpd",     "maxtries",     G_OPTION_ARG_INT,      &(mpdisplay_options.mpd_maxtries)},
-    {"window",  "width",        G_OPTION_ARG_INT,      &(mpdisplay_options.win_width)},
-    {"window",  "height",       G_OPTION_ARG_INT,      &(mpdisplay_options.win_height)},
-    {"window",  "fullscreen",   G_OPTION_ARG_NONE,     &(mpdisplay_options.win_fullscreen)},
-    {"control", "update-ms",    G_OPTION_ARG_INT,      &(mpdisplay_options.update_interval)},
+    {"mpd",     "hostname",      G_OPTION_ARG_STRING,   &(mpdisplay_options.mpd_hostname)},
+    {"mpd",     "password",      G_OPTION_ARG_STRING,   &(mpdisplay_options.mpd_password)},
+    {"mpd",     "port",          G_OPTION_ARG_INT,      &(mpdisplay_options.mpd_port)},
+    {"mpd",     "maxtries",      G_OPTION_ARG_INT,      &(mpdisplay_options.mpd_maxtries)},
+    {"window",  "width",         G_OPTION_ARG_INT,      &(mpdisplay_options.win_width)},
+    {"window",  "height",        G_OPTION_ARG_INT,      &(mpdisplay_options.win_height)},
+    {"window",  "fullscreen",    G_OPTION_ARG_NONE,     &(mpdisplay_options.win_fullscreen)},
+    {"control", "update-ms",     G_OPTION_ARG_INT,      &(mpdisplay_options.update_interval)},
+    {"icon",    "size-toolbar",  G_OPTION_ARG_INT,      &(mpdisplay_options.icon_size_toolbar)},
+    {"icon",    "size-playback", G_OPTION_ARG_INT,      &(mpdisplay_options.icon_size_playback)},
     {NULL}
 };
 

@@ -78,7 +78,9 @@ QWidget *WinDisp::create_bottom_row ()
     QWidget *result = new QWidget;
 
     /* icons */
-    int icon_size = QApplication::style()->pixelMetric(QStyle::PM_ToolBarIconSize);
+    int icon_size = QApplication::style()->pixelMetric(QStyle::PM_SmallIconSize);
+    if (mpdisplay_options.icon_size_toolbar > 0) icon_size = mpdisplay_options.icon_size_toolbar;
+    QSize qicon_size = QSize (icon_size, icon_size);
 
     /* tool buttons */
     bt_single  = new QToolButton;
@@ -88,6 +90,8 @@ QWidget *WinDisp::create_bottom_row ()
     bt_single->setText ("1");
     bt_repeat->setIcon (QIcon::fromTheme ("media-playlist-repeat-symbolic"));
     bt_shuffle->setIcon (QIcon::fromTheme ("media-playlist-shuffle-symbolic"));
+    bt_repeat->setIconSize (qicon_size);
+    bt_shuffle->setIconSize (qicon_size);
 
     bt_single->setCheckable(true);
     bt_repeat->setCheckable(true);
@@ -95,7 +99,7 @@ QWidget *WinDisp::create_bottom_row ()
 
     /* volume icon */
     QLabel *lb_volume = new QLabel;
-    lb_volume->setPixmap (QIcon::fromTheme ("player-volume").pixmap (icon_size, icon_size));
+    lb_volume->setPixmap (QIcon::fromTheme ("player-volume").pixmap (qicon_size));
 
     /* volume bar */
     pb_volume = new QProgressBar;
@@ -157,9 +161,9 @@ void WinDisp::create_update_timer ()
 
 void WinDisp::update_playback_state (StateVal s)
 {
-    const char *st_string_stop  = "media-playback-stop";
-    const char *st_string_play  = "media-playback-start";
-    const char *st_string_pause = "media-playback-pause";
+    const char *st_string_stop  = "media-playback-stop-symbolic";
+    const char *st_string_play  = "media-playback-start-symbolic";
+    const char *st_string_pause = "media-playback-pause-symbolic";
 
     const char *st_string = st_string_stop;
 
@@ -169,7 +173,8 @@ void WinDisp::update_playback_state (StateVal s)
         st_string = st_string_pause;
     }
 
-    int icon_size = QApplication::style()->pixelMetric(QStyle::PM_LargeIconSize);
+    int icon_size = QApplication::style()->pixelMetric(QStyle::PM_MessageBoxIconSize);
+    if (mpdisplay_options.icon_size_playback > 0) icon_size = mpdisplay_options.icon_size_playback;
     lb_state->setPixmap (QIcon::fromTheme (st_string).pixmap (icon_size, icon_size));
 }
 
