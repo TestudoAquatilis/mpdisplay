@@ -1,37 +1,59 @@
 CC=gcc
 CXX=g++
-OPTFLAGS=-O2
-#OPTFLAGS=-ggdb
-#CPPFLAGS+=-DDEBUG_NOMPD
-COMPILEFLAGS=-c -Wall -fpic
-CFLAGS=$(COMPILEFLAGS) -std=gnu99 $(OPTFLAGS) $(CPPFLAGS)
-CXXFLAGS=$(COMPILEFLAGS) $(OPTFLAGS) $(CPPFLAGS)
-LDFLAGS=$(OPTFLAGS)
+LD=$(CC)
 
-LIBS=Qt5Widgets glib-2.0 libmpdclient
-#LIBS=gtk+-3.0 glib-2.0 libmpdclient
+# define version: Qt, gtk
+VERSION=Qt
 
-CFLAGS+=$(shell pkg-config --cflags $(LIBS))
-CXXFLAGS+=$(shell pkg-config --cflags $(LIBS))
-LDFLAGS+=$(shell pkg-config --libs $(LIBS))
+# libs to include
+LIBS=glib-2.0 libmpdclient
+ifeq ($(VERSION),Qt)
+LIBS+=Qt5Widgets
+LD=$(CXX)
+endif
+ifeq ($(VERSION),gtk)
+LIBS+=gtk+-3.0
+endif
 
+# source files
 SOURCES= \
 	options.c \
 	mpd.c \
 	mpd_status.c
 
-#SOURCES+= \
-#	main.c \
-#	disp_window.c
+ifeq ($(VERSION),gtk)
+SOURCES+= \
+	gtkmain.c \
+	disp_window.c
+endif
 
+ifeq ($(VERSION),Qt)
 SOURCES+= \
 	qtmain.cpp \
 	win_disp.cpp
 
 QTW_HEADERS= \
 	win_disp.h
+endif
 
+# executable name
 EXECUTABLE=mpdisplay
+
+# flags
+OPTFLAGS=-O2
+#OPTFLAGS=-ggdb
+#CPPFLAGS+=-DDEBUG_NOMPD
+
+############################################################################
+# flags and co
+COMPILEFLAGS=-c -Wall -fpic
+CFLAGS=$(COMPILEFLAGS) -std=gnu99 $(OPTFLAGS) $(CPPFLAGS)
+CXXFLAGS=$(COMPILEFLAGS) $(OPTFLAGS) $(CPPFLAGS)
+LDFLAGS=$(OPTFLAGS)
+
+CFLAGS+=$(shell pkg-config --cflags $(LIBS))
+CXXFLAGS+=$(shell pkg-config --cflags $(LIBS))
+LDFLAGS+=$(shell pkg-config --libs $(LIBS))
 
 OBJDIR=obj
 
@@ -43,13 +65,15 @@ OBJECTS+=$(CXXSOURCES:%.cpp=$(OBJDIR)/%.o)
 DEPS=$(CSOURCES:%.c=$(OBJDIR)/%.d)
 DEPS+=$(CXXSOURCES:%.cpp=$(OBJDIR)/%.d)
 
+############################################################################
+# rules
 .PHONY: all
 all: $(EXECUTABLE)
 
 -include $(OBJECTS:.o=.d)
 
 $(EXECUTABLE): $(OBJECTS) Makefile
-	$(CXX) $(LDFLAGS) $(OBJECTS) -o $@
+	$(LD) $(LDFLAGS) $(OBJECTS) -o $@
 
 $(OBJDIR)/%.o: %.c Makefile | $(OBJDIR)
 	$(CC) -MM $(CFLAGS) $*.c > $(OBJDIR)/$*.d
