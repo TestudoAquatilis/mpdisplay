@@ -16,16 +16,16 @@ SOURCES= \
 ifeq ($(VARIANT),gtk)
 SOURCES+= \
 	gtkmain.c \
-	disp_window.c
+	gwin_disp.c
 endif
 
 ifeq ($(VARIANT),Qt)
 SOURCES+= \
 	qtmain.cpp \
-	win_disp.cpp
+	qwin_disp.cpp
 
 QTW_HEADERS= \
-	win_disp.h
+	qwin_disp.h
 endif
 
 ############################################################################

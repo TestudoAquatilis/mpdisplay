@@ -1,6 +1,6 @@
 #include <QApplication>
 
-#include "win_disp.h"
+#include "qwin_disp.h"
 #include "options.h"
 #include "mpd.h"
 

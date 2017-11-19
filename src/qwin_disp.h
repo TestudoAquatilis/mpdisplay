@@ -1,5 +1,5 @@
-#ifndef __WIN_DISP_H__
-#define __WIN_DISP_H__
+#ifndef __QWIN_DISP_H__
+#define __QWIN_DISP_H__
 
 #include <QtWidgets>
 #include <glib.h>

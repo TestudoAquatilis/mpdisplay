@@ -1,5 +1,5 @@
-#ifndef __DISP_WINDOW_H__
-#define __DISP_WINDOW_H__
+#ifndef __GWIN_DISP_H__
+#define __GWIN_DISP_H__
 
 #include <gtk/gtk.h>
 #include "mpd_status.h"
@@ -8,7 +8,7 @@
 extern "C" {
 #endif
 
-struct disp_window {
+struct win_disp {
     bool done;
     /* main window */
     GtkWidget *win_main;
@@ -24,10 +24,10 @@ struct disp_window {
     struct mpdisplay_mpd_status *current_status;
 };
 
-struct disp_window *disp_window_new    ();
-void                disp_window_free   (struct disp_window **w_p);
-void                disp_window_show   (struct disp_window *w);
-void                disp_window_update (struct disp_window *w, struct mpdisplay_mpd_status *s);
+struct win_disp *win_disp_new    ();
+void             win_disp_free   (struct win_disp **w_p);
+void             win_disp_show   (struct win_disp *w);
+void             win_disp_update (struct win_disp *w, struct mpdisplay_mpd_status *s);
 
 #ifdef __cplusplus
 }

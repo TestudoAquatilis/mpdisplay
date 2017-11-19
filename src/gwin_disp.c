@@ -2,7 +2,7 @@
 #include <gtk/gtk.h>
 #include <stdbool.h>
 
-#include "disp_window.h"
+#include "gwin_disp.h"
 #include "options.h"
 
 /* signal handler declaration */
@@ -10,9 +10,9 @@ static void sh_window_close (GtkWidget *widget, gpointer data);
 static void song_data_update (GtkWidget *widget, struct mpdisplay_mpd_status *s, struct mpdisplay_mpd_status *cs);
 
 /* initialization/finalization */
-struct disp_window *disp_window_new ()
+struct win_disp *win_disp_new ()
 {
-    struct disp_window *w = g_slice_new (struct disp_window);
+    struct win_disp *w = g_slice_new (struct win_disp);
     if (w == NULL) return NULL;
 
     w->done = true;
@@ -112,28 +112,28 @@ struct disp_window *disp_window_new ()
     return w;
 }
 
-void disp_window_free (struct disp_window **w_p)
+void win_disp_free (struct win_disp **w_p)
 {
     if (w_p == NULL) return;
 
-    struct disp_window *w = *w_p;
+    struct win_disp *w = *w_p;
 
     if (w == NULL) return;
 
     mpdisplay_mpd_status_free (&(w->current_status));
 
-    g_slice_free (struct disp_window, w);
+    g_slice_free (struct win_disp, w);
     *w_p = NULL;
 }
 
-void disp_window_show (struct disp_window *w)
+void win_disp_show (struct win_disp *w)
 {
     if (w == NULL) return;
 
     gtk_widget_show_all (GTK_WIDGET (w->win_main));
 }
 
-void disp_window_update (struct disp_window *w, struct mpdisplay_mpd_status *s)
+void win_disp_update (struct win_disp *w, struct mpdisplay_mpd_status *s)
 {
     if ((s == NULL) || (w == NULL)) return;
     struct mpdisplay_mpd_status *cs = w->current_status;
@@ -284,7 +284,7 @@ static void song_data_update (GtkWidget *sframe, struct mpdisplay_mpd_status *s,
 /* signal handlers */
 static void sh_window_close (GtkWidget *widget, gpointer data)
 {
-    struct disp_window* w = (struct disp_window*) data;
+    struct win_disp* w = (struct win_disp*) data;
     w->done = true;
 
     gtk_main_quit ();
