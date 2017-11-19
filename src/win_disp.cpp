@@ -37,6 +37,13 @@ void WinDisp::create_layout ()
 
     /* title */
     setWindowTitle("MPDisplay");
+
+    /* size */
+    int w_w = mpdisplay_options.win_width;
+    int w_h = mpdisplay_options.win_height;
+    if ((w_w > 0) | (w_h > 0)) {
+        this->resize (w_w, w_h);
+    }
 }
 
 QWidget *WinDisp::create_top_row ()

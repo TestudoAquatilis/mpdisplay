@@ -11,7 +11,12 @@ int main(int argc, char *argv[])
     QApplication app(argc, argv);
 
     WinDisp win_disp;
-    win_disp.show();
+
+    if (mpdisplay_options.win_fullscreen) {
+        win_disp.showMaximized();
+    } else {
+        win_disp.show();
+    }
 
     int result = app.exec();
 
