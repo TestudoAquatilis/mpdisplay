@@ -49,7 +49,7 @@ int main (int argc, char **argv)
     disp_window_show (w);
 
     struct us_data usd = {w};
-    g_timeout_add (500, update_status, (gpointer) &usd);
+    g_timeout_add (mpdisplay_options.update_interval, update_status, (gpointer) &usd);
 
     gtk_main ();
 

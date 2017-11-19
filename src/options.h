@@ -19,6 +19,8 @@ struct _mpdisplay_options {
     int          win_height;
     bool         win_fullscreen;
 
+    int          update_interval;
+
     const char  *progname;
 
     bool         verbose;

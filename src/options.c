@@ -14,6 +14,7 @@ struct _mpdisplay_options mpdisplay_options = {
     .win_width         = -1,
     .win_height        = -1,
     .win_fullscreen    = false,
+    .update_interval   = 500,
     .progname          = "mpdisplay",
     .verbose           = false,
     .debug             = false
@@ -35,19 +36,21 @@ static GOptionEntry option_entries [] = {
     {"window-width",  'w', 0, G_OPTION_ARG_INT,      &(mpdisplay_options.win_width),      "Set default width of window",                       "n"},
     {"window-height", 'h', 0, G_OPTION_ARG_INT,      &(mpdisplay_options.win_height),     "Set default height of window",                      "n"},
     {"fullscreen",    'F', 0, G_OPTION_ARG_NONE,     &(mpdisplay_options.win_fullscreen), "Start in fullscreen mode",                          NULL},
+    {"update-ms",     'u', 0, G_OPTION_ARG_INT,      &(mpdisplay_options.update_interval),"Set update interval for mpd status to <t> ms",      "t"},
     {"verbose",       'v', 0, G_OPTION_ARG_NONE,     &(mpdisplay_options.verbose),        "Set to verbose",                                    NULL},
     {"debug",         'd', 0, G_OPTION_ARG_NONE,     &(mpdisplay_options.debug),          "Activate debug output",                             NULL},
     {NULL}
 };
 
 static struct option_file_data cfg_file_entries [] = {
-    {"mpd",    "hostname",     G_OPTION_ARG_STRING,   &(mpdisplay_options.mpd_hostname)},
-    {"mpd",    "password",     G_OPTION_ARG_STRING,   &(mpdisplay_options.mpd_password)},
-    {"mpd",    "port",         G_OPTION_ARG_INT,      &(mpdisplay_options.mpd_port)},
-    {"mpd",    "maxtries",     G_OPTION_ARG_INT,      &(mpdisplay_options.mpd_maxtries)},
-    {"window", "width",        G_OPTION_ARG_INT,      &(mpdisplay_options.win_width)},
-    {"window", "height",       G_OPTION_ARG_INT,      &(mpdisplay_options.win_height)},
-    {"window", "fullscreen",   G_OPTION_ARG_NONE,     &(mpdisplay_options.win_fullscreen)},
+    {"mpd",     "hostname",     G_OPTION_ARG_STRING,   &(mpdisplay_options.mpd_hostname)},
+    {"mpd",     "password",     G_OPTION_ARG_STRING,   &(mpdisplay_options.mpd_password)},
+    {"mpd",     "port",         G_OPTION_ARG_INT,      &(mpdisplay_options.mpd_port)},
+    {"mpd",     "maxtries",     G_OPTION_ARG_INT,      &(mpdisplay_options.mpd_maxtries)},
+    {"window",  "width",        G_OPTION_ARG_INT,      &(mpdisplay_options.win_width)},
+    {"window",  "height",       G_OPTION_ARG_INT,      &(mpdisplay_options.win_height)},
+    {"window",  "fullscreen",   G_OPTION_ARG_NONE,     &(mpdisplay_options.win_fullscreen)},
+    {"control", "update-ms",    G_OPTION_ARG_INT,      &(mpdisplay_options.update_interval)},
     {NULL}
 };
 
@@ -146,6 +149,14 @@ static bool options_check ()
     }
     if (mpdisplay_options.debug) {
         printf ("mpd-maxtries: %d\n", mpdisplay_options.mpd_maxtries);
+    }
+    if (mpdisplay_options.update_interval <= 0) {
+        fprintf (stderr, "ERROR: update interval must be > 0 (was %d)\n", mpdisplay_options.update_interval);
+        return false;
+    } else {
+        if (mpdisplay_options.debug) {
+            printf ("update interval: %d ms\n", mpdisplay_options.update_interval);
+        }
     }
 
     return true;
