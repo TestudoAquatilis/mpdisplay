@@ -17,8 +17,14 @@ static void       win_disp_create_layout             (struct win_disp *w);
 static void       win_disp_create_update_timer       (struct win_disp *w);
 
 /* update helpers */
-static void win_disp_update_playback_state_val (struct win_disp *w, enum win_disp_state_val s);
-static void win_disp_update_playback_state_st  (struct win_disp *w, struct mpdisplay_mpd_status *st);
+static void win_disp_update_playback_state_val  (struct win_disp *w, enum win_disp_state_val s);
+static void win_disp_update_playback_state_st   (struct win_disp *w, struct mpdisplay_mpd_status *st);
+static void win_disp_update_playlist_state_bool (struct win_disp *w, bool single, bool repeat, bool shuffle);
+static void win_disp_update_playlist_state_st   (struct win_disp *w, struct mpdisplay_mpd_status *st);
+static void win_disp_update_volume_int          (struct win_disp *w, int volume);
+static void win_disp_update_volume_st           (struct win_disp *w, struct mpdisplay_mpd_status *st);
+static void win_disp_update_time_int            (struct win_disp *w, int total_s, int elapsed_s);
+static void win_disp_update_time_st             (struct win_disp *w, struct mpdisplay_mpd_status *st);
 
 static void win_disp_update_mpd_status_st (struct win_disp *w, struct mpdisplay_mpd_status *s);
 static void win_disp_update_tags (GtkWidget *widget, struct mpdisplay_mpd_status *s, struct mpdisplay_mpd_status *cs);
@@ -41,9 +47,9 @@ struct win_disp *win_disp_new ()
     w->im_state   = NULL;
     w->pb_time    = NULL;
     w->pb_volume  = NULL;
-    w->tb_shuffle = NULL;
-    w->tb_repeat  = NULL;
     w->tb_single  = NULL;
+    w->tb_repeat  = NULL;
+    w->tb_shuffle = NULL;
     w->fr_center  = NULL;
     w->tm_update  = -1;
 
@@ -108,16 +114,16 @@ static GtkWidget *win_disp_create_bottom_row (struct win_disp *w)
 
     /* tool buttons */
     w->tb_single  = gtk_toggle_button_new ();
-    w->tb_shuffle = gtk_toggle_button_new ();
     w->tb_repeat  = gtk_toggle_button_new ();
+    w->tb_shuffle = gtk_toggle_button_new ();
 
     GtkWidget *lbl_single  = gtk_label_new ("1");
-    GtkWidget *img_shuffle = gtk_image_new_from_icon_name ("media-playlist-shuffle-symbolic", GTK_ICON_SIZE_SMALL_TOOLBAR);
     GtkWidget *img_repeat  = gtk_image_new_from_icon_name ("media-playlist-repeat-symbolic", GTK_ICON_SIZE_SMALL_TOOLBAR);
+    GtkWidget *img_shuffle = gtk_image_new_from_icon_name ("media-playlist-shuffle-symbolic", GTK_ICON_SIZE_SMALL_TOOLBAR);
 
     gtk_container_add (GTK_CONTAINER (w->tb_single),  lbl_single);
-    gtk_container_add (GTK_CONTAINER (w->tb_shuffle), img_shuffle);
     gtk_container_add (GTK_CONTAINER (w->tb_repeat),  img_repeat);
+    gtk_container_add (GTK_CONTAINER (w->tb_shuffle), img_shuffle);
 
     /* volume icon */
     GtkWidget *img_volume  = gtk_image_new_from_icon_name ("multimedia-volume-control-symbolic", GTK_ICON_SIZE_SMALL_TOOLBAR);
@@ -128,8 +134,8 @@ static GtkWidget *win_disp_create_bottom_row (struct win_disp *w)
 
     /* put everything together */
     gtk_box_pack_start (GTK_BOX (result), w->tb_single,  false, true, 0);
-    gtk_box_pack_start (GTK_BOX (result), w->tb_shuffle, false, true, 0);
     gtk_box_pack_start (GTK_BOX (result), w->tb_repeat,  false, true, 0);
+    gtk_box_pack_start (GTK_BOX (result), w->tb_shuffle, false, true, 0);
     gtk_box_pack_end   (GTK_BOX (result), w->pb_volume,  false, true, 0);
     gtk_box_pack_end   (GTK_BOX (result), img_volume,    false, true, 0);
 
@@ -236,6 +242,106 @@ static void win_disp_update_playback_state_st (struct win_disp *w, struct mpdisp
     }
 }
 
+static void win_disp_update_playlist_state_bool (struct win_disp *w, bool single, bool repeat, bool shuffle)
+{
+    gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (w->tb_single),  single);
+    gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (w->tb_repeat),  repeat);
+    gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (w->tb_shuffle), shuffle);
+}
+
+static void win_disp_update_playlist_state_st (struct win_disp *w, struct mpdisplay_mpd_status *st)
+{
+    if ((st == NULL) || (!st->success)) {
+        win_disp_update_playlist_state_bool (w, false, false, false);
+        return;
+    }
+
+    struct mpdisplay_mpd_status *cst = w->mpd_st_current;
+
+    if ((cst != NULL) && (cst->success)) {
+        if ((cst->single == st->single) && (cst->repeat == st->repeat) && (cst->shuffle == st->shuffle)) return;
+    }
+
+    win_disp_update_playlist_state_bool (w, st->single, st->repeat, st->shuffle);
+}
+
+static void win_disp_update_volume_int (struct win_disp *w, int volume)
+{
+    gdouble gd_volume;
+    if (volume < 0) {
+        gd_volume = 0.0;
+    } else if (volume > 100) {
+        gd_volume = 1.0;
+    } else {
+        gd_volume = (gdouble) volume / (gdouble) 100.0;
+    }
+
+    gtk_progress_bar_set_fraction (GTK_PROGRESS_BAR (w->pb_volume), gd_volume);
+}
+
+static void win_disp_update_volume_st (struct win_disp *w, struct mpdisplay_mpd_status *st)
+{
+    if ((st == NULL) || (!st->success)) {
+        win_disp_update_volume_int (w, 0);
+        return;
+    }
+
+    struct mpdisplay_mpd_status *cst = w->mpd_st_current;
+
+    if ((cst != NULL) && (cst->success)) {
+        if (cst->volume == st->volume) return;
+    }
+
+    win_disp_update_volume_int (w, st->volume);
+}
+
+static void win_disp_update_time_int (struct win_disp *w, int total_s, int elapsed_s)
+{
+    GString *st_progress = g_string_new (NULL);
+
+    if (elapsed_s >= 0) {
+        g_string_printf (st_progress, "%d:%02d", elapsed_s/60, elapsed_s%60);
+        if (total_s >= 0) {
+            g_string_append_printf (st_progress, " / %d:%02d", total_s/60, total_s%60);
+        } else {
+            total_s = elapsed_s;
+        }
+    } else {
+        elapsed_s = 0;
+        if (total_s >= 0) {
+            g_string_printf (st_progress, "%d:%02d", total_s/60, total_s%60);
+        } else {
+            st_progress = g_string_assign (st_progress, "?");
+            total_s = 0;
+        }
+    }
+
+    if (total_s < 1) total_s = 1;
+
+    gdouble pb_progress = (gdouble) elapsed_s / (gdouble) total_s;
+
+    gtk_progress_bar_set_fraction  (GTK_PROGRESS_BAR (w->pb_time), pb_progress);
+    gtk_progress_bar_set_text      (GTK_PROGRESS_BAR (w->pb_time), st_progress->str);
+
+    g_string_free (st_progress, true);
+}
+
+static void win_disp_update_time_st (struct win_disp *w, struct mpdisplay_mpd_status *st)
+{
+    if ((st == NULL) || (!st->success)) {
+        win_disp_update_time_int (w, 0, 0);
+        return;
+    }
+
+    struct mpdisplay_mpd_status *cst = w->mpd_st_current;
+
+    if ((cst != NULL) && (cst->success)) {
+        if ((cst->seconds_elapsed == st->seconds_elapsed) && (cst->seconds_total == st->seconds_total)) return;
+    }
+
+    win_disp_update_time_int (w, st->seconds_total, st->seconds_elapsed);
+}
+
 static gboolean win_disp_update_mpd_status (gpointer data_p)
 {
     struct win_disp *w = (struct win_disp *) data_p;
@@ -271,61 +377,13 @@ static void win_disp_update_mpd_status_st (struct win_disp *w, struct mpdisplay_
     win_disp_update_playback_state_st (w, s);
 
     /* playback time */
-    if ((cs == NULL) || (cs->seconds_elapsed != s->seconds_elapsed) || (cs->seconds_total != s->seconds_total)) {
-        gdouble  pb_progress = 0;
-        bool     pb_pulse    = false;
-        GString *st_progress = g_string_new (NULL);
-
-        if (s->play || s->pause) {
-            if ((s->seconds_total > 0) && (s->seconds_elapsed >= 0) && (s->seconds_total >= s->seconds_elapsed)) {
-                pb_progress = (gdouble) s->seconds_elapsed / (gdouble) s->seconds_total;
-            } else {
-                pb_progress = 1;
-                if (s->play) pb_pulse = true;
-            }
-            if (s->seconds_elapsed >= 0) {
-                g_string_printf (st_progress, "%d:%02d", s->seconds_elapsed/60, s->seconds_elapsed%60);
-            } else {
-                st_progress = g_string_assign (st_progress, "?");
-            }
-            if (s->seconds_total > 0) {
-                g_string_append_printf (st_progress, " / %d:%02d", s->seconds_total/60, s->seconds_total%60);
-            }
-        } else {
-            if (s->seconds_total >= 0) {
-                g_string_printf (st_progress, "%d:%02d", s->seconds_total/60, s->seconds_total%60);
-            } else {
-                st_progress = g_string_assign (st_progress, "");
-            }
-        }
-
-        gtk_progress_bar_set_fraction  (GTK_PROGRESS_BAR (w->pb_time), pb_progress);
-        gtk_progress_bar_set_text      (GTK_PROGRESS_BAR (w->pb_time), st_progress->str);
-
-        if (pb_pulse) gtk_progress_bar_pulse (GTK_PROGRESS_BAR (w->pb_time));
-
-        g_string_free (st_progress, true);
-    }
-
+    win_disp_update_time_st (w, s);
 
     /* playlist status */
-    if ((cs == NULL) || (cs->single != s->single))   gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (w->tb_single),  s->single);
-    if ((cs == NULL) || (cs->shuffle != s->shuffle)) gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (w->tb_shuffle), s->shuffle);
-    if ((cs == NULL) || (cs->repeat != s->repeat))   gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (w->tb_repeat),  s->repeat);
+    win_disp_update_playlist_state_st (w, s);
 
     /* volume */
-    if ((cs == NULL) || (cs->volume != s->volume)) {
-        gdouble volume = 0;
-        if (s->volume >= 0) {
-            if (s->volume <= 100) {
-                volume = (gdouble) s->volume / (gdouble) 100;
-            } else {
-                volume = 1;
-            }
-        }
-
-        gtk_progress_bar_set_fraction (GTK_PROGRESS_BAR (w->pb_volume), volume);
-    }
+    win_disp_update_volume_st (w, s);
 
     /* song data */
     win_disp_update_tags (w->fr_center, s, cs);

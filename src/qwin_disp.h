@@ -41,7 +41,7 @@ class WinDisp: public QMainWindow {
         void update_playlist_state (struct mpdisplay_mpd_status *st);
         void update_volume (int volume);
         void update_volume (struct mpdisplay_mpd_status *st);
-        void update_time (int total_ms, int current_ms);
+        void update_time (int total_s, int elapsed_s);
         void update_time (struct mpdisplay_mpd_status *st);
         void clear_tags ();
         void update_tags_nocon ();
