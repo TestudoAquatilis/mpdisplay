@@ -1,19 +1,11 @@
 CC=gcc
 CXX=g++
-LD=$(CC)
 
 # define version: Qt, gtk
 VARIANT?=Qt
 
-# libs to include
-LIBS=glib-2.0 libmpdclient
-ifeq ($(VARIANT),Qt)
-LIBS+=Qt5Widgets
-LD=$(CXX)
-endif
-ifeq ($(VARIANT),gtk)
-LIBS+=gtk+-3.0
-endif
+EXECUTABLE_QT=qmpdisplay
+EXECUTABLE_GTK=gmpdisplay
 
 # source files
 SOURCES= \
@@ -36,12 +28,25 @@ QTW_HEADERS= \
 	win_disp.h
 endif
 
-# executable name
+############################################################################
+# libs to include, executable, linker
+LIBS=glib-2.0 libmpdclient
+
+LD=$(CC)
 ifeq ($(VARIANT),Qt)
-EXECUTABLE=qmpdisplay
+LIBS+=Qt5Widgets
+LD=$(CXX)
 endif
 ifeq ($(VARIANT),gtk)
-EXECUTABLE=gmpdisplay
+LIBS+=gtk+-3.0
+endif
+
+# executable name
+ifeq ($(VARIANT),Qt)
+EXECUTABLE=$(EXECUTABLE_QT)
+endif
+ifeq ($(VARIANT),gtk)
+EXECUTABLE=$(EXECUTABLE_GTK)
 endif
 
 # flags
