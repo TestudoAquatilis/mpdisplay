@@ -4,9 +4,12 @@
 
 #include "gwin_disp.h"
 #include "options.h"
+#include "mpd.h"
 
 /* signal handler declaration */
 static void sh_window_close (GtkWidget *widget, gpointer data);
+static gboolean win_disp_update_mpd_status (gpointer data_p);
+static void win_disp_update_mpd_status_st (struct win_disp *w, struct mpdisplay_mpd_status *s);
 static void song_data_update (GtkWidget *widget, struct mpdisplay_mpd_status *s, struct mpdisplay_mpd_status *cs);
 
 /* initialization/finalization */
@@ -14,8 +17,6 @@ struct win_disp *win_disp_new ()
 {
     struct win_disp *w = g_slice_new (struct win_disp);
     if (w == NULL) return NULL;
-
-    w->done = true;
 
     /*****************/
     /* init pointers */
@@ -29,6 +30,7 @@ struct win_disp *win_disp_new ()
     w->tb_repeat  = NULL;
     w->tb_single  = NULL;
     w->fr_center  = NULL;
+    w->tm_update  = -1;
 
     /* temporaryly stored widgets */
     GtkWidget *vbox0       = NULL;
@@ -107,7 +109,7 @@ struct win_disp *win_disp_new ()
     /**********/
     /* events */
     g_signal_connect (G_OBJECT (w->win_main), "destroy", G_CALLBACK (sh_window_close), (gpointer) w);
-    w->done = false;
+    w->tm_update = g_timeout_add (mpdisplay_options.update_interval, win_disp_update_mpd_status, (gpointer) w);
 
     return w;
 }
@@ -133,12 +135,36 @@ void win_disp_show (struct win_disp *w)
     gtk_widget_show_all (GTK_WIDGET (w->win_main));
 }
 
-void win_disp_update (struct win_disp *w, struct mpdisplay_mpd_status *s)
+static gboolean win_disp_update_mpd_status (gpointer data_p)
+{
+    struct win_disp *w = (struct win_disp *) data_p;
+
+    if (w == NULL) return false;
+
+#ifdef DEBUG_NOMPD
+    /* generate dummy data */
+    struct mpdisplay_mpd_status *st = mpdisplay_mpd_status_new ();
+
+    st->success = true;
+    mpdisplay_mpd_status_add_song_data (st, "tag1", "value1", 0);
+    mpdisplay_mpd_status_add_song_data (st, "tag2", "value2 with more content", -1);
+    mpdisplay_mpd_status_add_song_data (st, "tag3", "value3 with more so much content that it should be necessary to wrap it somewhere", 0);
+#else
+    /* get status */
+    struct mpdisplay_mpd_status *st = mpdisplay_mpd_get_status ();
+#endif
+
+    win_disp_update_mpd_status_st (w, st);
+
+    mpdisplay_mpd_status_free (&st);
+
+    return true;
+}
+
+static void win_disp_update_mpd_status_st (struct win_disp *w, struct mpdisplay_mpd_status *s)
 {
     if ((s == NULL) || (w == NULL)) return;
     struct mpdisplay_mpd_status *cs = w->mpd_st_current;
-
-    if (w->done) return;
 
     /* play/pause/stop icon */
     if ((cs == NULL) || (cs->play != s->play) || (cs->pause != s->pause)) {
@@ -285,7 +311,9 @@ static void song_data_update (GtkWidget *sframe, struct mpdisplay_mpd_status *s,
 static void sh_window_close (GtkWidget *widget, gpointer data)
 {
     struct win_disp* w = (struct win_disp*) data;
-    w->done = true;
+    if (w == NULL) return;
+
+    if (w->tm_update > 0) g_source_remove (w->tm_update);
 
     gtk_main_quit ();
 

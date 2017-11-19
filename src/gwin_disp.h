@@ -9,7 +9,6 @@ extern "C" {
 #endif
 
 struct win_disp {
-    bool done;
     /* main window */
     GtkWidget *win_main;
     /* important widgets */
@@ -20,6 +19,7 @@ struct win_disp {
     GtkWidget *tb_single;
     GtkWidget *tb_shuffle;
     GtkWidget *tb_repeat;
+    guint      tm_update;
     /* status */
     struct mpdisplay_mpd_status *mpd_st_current;
 };
@@ -27,7 +27,6 @@ struct win_disp {
 struct win_disp *win_disp_new    ();
 void             win_disp_free   (struct win_disp **w_p);
 void             win_disp_show   (struct win_disp *w);
-void             win_disp_update (struct win_disp *w, struct mpdisplay_mpd_status *s);
 
 #ifdef __cplusplus
 }
