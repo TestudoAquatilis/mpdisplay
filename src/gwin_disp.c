@@ -156,6 +156,7 @@ static GtkWidget *win_disp_create_center_frame (struct win_disp *w)
     w->fr_center  = gtk_frame_new (NULL);
 
     gtk_frame_set_shadow_type (GTK_FRAME (w->fr_center), GTK_SHADOW_NONE);
+    gtk_widget_set_halign (w->fr_center, GTK_ALIGN_FILL);
 
     win_disp_update_tags_nocon (w);
 
@@ -356,8 +357,7 @@ static void win_disp_clear_tags (struct win_disp *w)
 
     /* add grid */
     GtkWidget *grid = gtk_grid_new ();
-    gtk_widget_set_halign (grid, GTK_ALIGN_START);
-    gtk_widget_set_valign (grid, GTK_ALIGN_START);
+    gtk_widget_set_halign (grid, GTK_ALIGN_FILL);
 
     gtk_grid_set_row_spacing     (GTK_GRID (grid), 5);
     gtk_grid_set_column_spacing  (GTK_GRID (grid), 5);
@@ -421,7 +421,11 @@ static void win_disp_update_tags_glist (struct win_disp *w, GList *tlist)
         gtk_widget_set_halign (label_value, GTK_ALIGN_FILL);
         gtk_widget_set_valign (label_value, GTK_ALIGN_START);
 
+        gtk_widget_set_hexpand  (label_value, true);
+        gtk_label_set_justify   (GTK_LABEL (label_value), GTK_JUSTIFY_CENTER);
         gtk_label_set_line_wrap (GTK_LABEL (label_value), true);
+        gtk_label_set_ellipsize (GTK_LABEL (label_value), PANGO_ELLIPSIZE_END);
+        gtk_label_set_lines     (GTK_LABEL (label_value), 2);
 
         if (do_attr && (e->priority < 0)) {
             gtk_label_set_attributes (GTK_LABEL(label_name),  font_attr_list);
