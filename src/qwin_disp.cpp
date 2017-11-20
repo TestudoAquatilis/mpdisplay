@@ -353,12 +353,14 @@ void WinDisp::update_tags (GList *tlist)
 
 void WinDisp::update_tags (struct mpdisplay_mpd_status *st)
 {
+    struct mpdisplay_mpd_status *cst = mpd_st_current;
+
     if ((st == NULL) || (!st->success)) {
-        update_tags_nocon ();
+        if ((cst != NULL) && (cst->success)) {
+            update_tags_nocon ();
+        }
         return;
     }
-
-    struct mpdisplay_mpd_status *cst = mpd_st_current;
 
     if ((cst != NULL) && (cst->success)) {
         if (mpdisplay_mpd_status_tags_equal (cst, st)) return;

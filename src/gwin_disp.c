@@ -443,12 +443,14 @@ static void win_disp_update_tags_glist (struct win_disp *w, GList *tlist)
 
 static void win_disp_update_tags_st (struct win_disp *w, struct mpdisplay_mpd_status *st)
 {
+    struct mpdisplay_mpd_status *cst = w->mpd_st_current;
+
     if ((st == NULL) || (!st->success)) {
-        win_disp_update_tags_nocon (w);
+        if ((cst != NULL) && (cst->success)) {
+            win_disp_update_tags_nocon (w);
+        }
         return;
     }
-
-    struct mpdisplay_mpd_status *cst = w->mpd_st_current;
 
     if ((cst != NULL) && (cst->success)) {
         if (mpdisplay_mpd_status_tags_equal (cst, st)) return;
