@@ -398,6 +398,16 @@ static void win_disp_update_tags_glist (struct win_disp *w, GList *tlist)
     win_disp_clear_tags (w);
     GtkWidget *grid = w->ly_center;
 
+    bool do_attr = false;
+    PangoAttrList *font_attr_list;
+
+    if (mpdisplay_options.win_prioscale) {
+        do_attr = true;
+        font_attr_list = pango_attr_list_new ();
+        pango_attr_list_insert (font_attr_list, pango_attr_scale_new (0.75));
+    }
+
+
     int i = 0;
     for (GList *li = tlist; li != NULL; li = li->next, i++) {
         struct mpdisplay_song_data_entry *e = (struct mpdisplay_song_data_entry *) li->data;
@@ -413,11 +423,18 @@ static void win_disp_update_tags_glist (struct win_disp *w, GList *tlist)
 
         gtk_label_set_line_wrap (GTK_LABEL (label_value), true);
 
+        if (do_attr && (e->priority < 0)) {
+            gtk_label_set_attributes (GTK_LABEL(label_name),  font_attr_list);
+            gtk_label_set_attributes (GTK_LABEL(label_value), font_attr_list);
+        }
+
         gtk_grid_attach (GTK_GRID (grid), label_name,  0, i, 1, 1);
         gtk_grid_attach (GTK_GRID (grid), label_value, 1, i, 1, 1);
     }
 
     gtk_widget_show_all (w->fr_center);
+
+    if (do_attr) pango_attr_list_unref (font_attr_list);
 }
 
 static void win_disp_update_tags_st (struct win_disp *w, struct mpdisplay_mpd_status *st)
