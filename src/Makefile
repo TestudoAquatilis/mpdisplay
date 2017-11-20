@@ -114,6 +114,9 @@ clean:
 	rm -rf $(OBJDIR) $(MOCDIR)
 	rm -f *.moc.cpp
 
+run: $(EXECUTABLE)
+	./$(EXECUTABLE)
+
 memcheck: all
 	valgrind --leak-check=full ./$(EXECUTABLE)
 slicecheck: all
