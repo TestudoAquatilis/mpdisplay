@@ -124,6 +124,12 @@ static GtkWidget *win_disp_create_bottom_row (struct win_disp *w)
     GtkWidget *img_repeat  = gtk_image_new_from_icon_name ("media-playlist-repeat-symbolic", GTK_ICON_SIZE_SMALL_TOOLBAR);
     GtkWidget *img_shuffle = gtk_image_new_from_icon_name ("media-playlist-shuffle-symbolic", GTK_ICON_SIZE_SMALL_TOOLBAR);
 
+    /* sizing */
+    gint width;
+    gint height;
+    gtk_icon_size_lookup (GTK_ICON_SIZE_SMALL_TOOLBAR, &width, &height);
+    gtk_widget_set_size_request (lbl_single, width, height);
+
     gtk_container_add (GTK_CONTAINER (w->tb_single),  lbl_single);
     gtk_container_add (GTK_CONTAINER (w->tb_repeat),  img_repeat);
     gtk_container_add (GTK_CONTAINER (w->tb_shuffle), img_shuffle);
