@@ -125,9 +125,17 @@ static GtkWidget *win_disp_create_bottom_row (struct win_disp *w)
     GtkWidget *img_shuffle = gtk_image_new_from_icon_name ("media-playlist-shuffle-symbolic", GTK_ICON_SIZE_SMALL_TOOLBAR);
 
     /* sizing */
+    int icon_size = mpdisplay_options.icon_size_toolbar;
     gint width;
     gint height;
-    gtk_icon_size_lookup (GTK_ICON_SIZE_SMALL_TOOLBAR, &width, &height);
+    if (icon_size > 0) {
+        width  = icon_size;
+        height = icon_size;
+        gtk_image_set_pixel_size (GTK_IMAGE (img_repeat),  icon_size);
+        gtk_image_set_pixel_size (GTK_IMAGE (img_shuffle), icon_size);
+    } else {
+        gtk_icon_size_lookup (GTK_ICON_SIZE_SMALL_TOOLBAR, &width, &height);
+    }
     gtk_widget_set_size_request (lbl_single, width, height);
     PangoAttrList *font_attr_list = pango_attr_list_new ();
     pango_attr_list_insert (font_attr_list, pango_attr_size_new_absolute ((width * 8 * PANGO_SCALE) / 10));
@@ -140,6 +148,9 @@ static GtkWidget *win_disp_create_bottom_row (struct win_disp *w)
 
     /* volume icon */
     GtkWidget *img_volume  = gtk_image_new_from_icon_name ("multimedia-volume-control-symbolic", GTK_ICON_SIZE_SMALL_TOOLBAR);
+    if (icon_size > 0) {
+        gtk_image_set_pixel_size (GTK_IMAGE (img_volume), icon_size);
+    }
 
     /* volume bar */
     w->pb_volume  = gtk_progress_bar_new ();
@@ -240,6 +251,11 @@ static void win_disp_update_playback_state_val (struct win_disp *w, enum win_dis
     }
 
     gtk_image_set_from_icon_name (GTK_IMAGE (w->im_state), st_string, GTK_ICON_SIZE_DIALOG);
+
+    int icon_size = mpdisplay_options.icon_size_playback;
+    if (icon_size > 0) {
+        gtk_image_set_pixel_size (GTK_IMAGE (w->im_state), icon_size);
+    }
 }
 
 static void win_disp_update_playback_state_st (struct win_disp *w, struct mpdisplay_mpd_status *st)
