@@ -163,9 +163,14 @@ static GtkWidget *win_disp_create_new_separator_line (struct win_disp *w)
 
 static GtkWidget *win_disp_create_center_frame (struct win_disp *w)
 {
-    w->fr_center  = gtk_frame_new (NULL);
+    w->fr_center = gtk_scrolled_window_new (NULL, NULL);
 
-    gtk_frame_set_shadow_type (GTK_FRAME (w->fr_center), GTK_SHADOW_NONE);
+    gtk_scrolled_window_set_shadow_type (GTK_SCROLLED_WINDOW (w->fr_center), GTK_SHADOW_NONE);
+
+    gtk_scrolled_window_set_propagate_natural_width  (GTK_SCROLLED_WINDOW (w->fr_center), true);
+    gtk_scrolled_window_set_propagate_natural_height (GTK_SCROLLED_WINDOW (w->fr_center), false);
+    gtk_scrolled_window_set_policy (GTK_SCROLLED_WINDOW (w->fr_center), GTK_POLICY_NEVER, GTK_POLICY_AUTOMATIC);
+
     gtk_widget_set_halign (w->fr_center, GTK_ALIGN_FILL);
 
     win_disp_update_tags_nocon (w);
@@ -437,8 +442,6 @@ static void win_disp_update_tags_glist (struct win_disp *w, GList *tlist)
         gtk_widget_set_hexpand  (label_value, true);
         gtk_label_set_justify   (GTK_LABEL (label_value), GTK_JUSTIFY_CENTER);
         gtk_label_set_line_wrap (GTK_LABEL (label_value), true);
-        gtk_label_set_ellipsize (GTK_LABEL (label_value), PANGO_ELLIPSIZE_END);
-        gtk_label_set_lines     (GTK_LABEL (label_value), 2);
 
         if (do_attr && (e->priority < 0)) {
             gtk_label_set_attributes (GTK_LABEL(label_name),  font_attr_list);
