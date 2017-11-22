@@ -104,6 +104,8 @@ static GtkWidget *win_disp_create_top_row (struct win_disp *w)
     gtk_progress_bar_set_text      (GTK_PROGRESS_BAR (w->pb_time), "?");
     gtk_progress_bar_set_show_text (GTK_PROGRESS_BAR (w->pb_time), true);
 
+    gtk_widget_set_valign  (w->pb_time, GTK_ALIGN_CENTER);
+
     /* put everything together */
     gtk_box_pack_start (GTK_BOX (result), w->im_state, false, true, 0);
     gtk_box_pack_start (GTK_BOX (result), w->pb_time,  true,  true, 0);
@@ -157,6 +159,8 @@ static GtkWidget *win_disp_create_bottom_row (struct win_disp *w)
     gtk_progress_bar_set_fraction  (GTK_PROGRESS_BAR (w->pb_volume), 0.0);
     gtk_progress_bar_set_text      (GTK_PROGRESS_BAR (w->pb_volume), "0%");
     gtk_progress_bar_set_show_text (GTK_PROGRESS_BAR (w->pb_volume), true);
+
+    gtk_widget_set_valign  (w->pb_volume, GTK_ALIGN_CENTER);
 
     /* put everything together */
     gtk_box_pack_start (GTK_BOX (result), w->tb_single,  false, true, 0);
@@ -447,7 +451,6 @@ static void win_disp_update_tags_glist (struct win_disp *w, GList *tlist)
         font_attr_list = pango_attr_list_new ();
         pango_attr_list_insert (font_attr_list, pango_attr_scale_new (0.75));
     }
-
 
     int i = 0;
     for (GList *li = tlist; li != NULL; li = li->next, i++) {
