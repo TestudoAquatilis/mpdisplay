@@ -7,6 +7,7 @@ mpdisplay is an MPD client for displaying current status on small displays (eg A
 You need
 - libmpdclient
 - glib version 2
+
 and depending on GUI variant either of
 - gtk+ 3.0
 - Qt 5.9
