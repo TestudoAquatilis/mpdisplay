@@ -129,6 +129,10 @@ static GtkWidget *win_disp_create_bottom_row (struct win_disp *w)
     gint height;
     gtk_icon_size_lookup (GTK_ICON_SIZE_SMALL_TOOLBAR, &width, &height);
     gtk_widget_set_size_request (lbl_single, width, height);
+    PangoAttrList *font_attr_list = pango_attr_list_new ();
+    pango_attr_list_insert (font_attr_list, pango_attr_size_new_absolute ((width * 8 * PANGO_SCALE) / 10));
+    gtk_label_set_attributes (GTK_LABEL(lbl_single), font_attr_list);
+    pango_attr_list_unref (font_attr_list);
 
     gtk_container_add (GTK_CONTAINER (w->tb_single),  lbl_single);
     gtk_container_add (GTK_CONTAINER (w->tb_repeat),  img_repeat);
