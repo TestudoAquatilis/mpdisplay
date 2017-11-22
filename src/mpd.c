@@ -66,6 +66,7 @@ static void mpdisplay_song_tags_to_status (struct mpd_song *song, struct mpdispl
     const char *title       = mpd_song_get_tag (song, MPD_TAG_TITLE, 0);
     const char *date        = mpd_song_get_tag (song, MPD_TAG_DATE, 0);
     const char *composer    = mpd_song_get_tag (song, MPD_TAG_COMPOSER, 0);
+    const char *uri         = mpd_song_get_uri (song);
 
     GString *tag = g_string_new (NULL);
 
@@ -150,6 +151,11 @@ static void mpdisplay_song_tags_to_status (struct mpd_song *song, struct mpdispl
     }
 
     g_string_free (tag, true);
+
+    /* uri - if nothing else */
+    if (g_queue_is_empty (st->song_data)) {
+        mpdisplay_mpd_status_add_song_data (st, "URI:", uri, 0);
+    }
 }
 
 /* free connection struct */
