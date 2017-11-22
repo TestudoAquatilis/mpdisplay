@@ -91,7 +91,7 @@ void win_disp_show (struct win_disp *w)
 /*****************************************************************************************/
 static GtkWidget *win_disp_create_top_row (struct win_disp *w)
 {
-    GtkWidget *result = gtk_box_new (GTK_ORIENTATION_HORIZONTAL, 1);
+    GtkWidget *result = gtk_box_new (GTK_ORIENTATION_HORIZONTAL, w->_spacing);
 
     /* icon */
     w->im_state = gtk_image_new ();
@@ -113,7 +113,7 @@ static GtkWidget *win_disp_create_top_row (struct win_disp *w)
 
 static GtkWidget *win_disp_create_bottom_row (struct win_disp *w)
 {
-    GtkWidget *result = gtk_box_new (GTK_ORIENTATION_HORIZONTAL, 1);
+    GtkWidget *result = gtk_box_new (GTK_ORIENTATION_HORIZONTAL, w->_spacing);
 
     /* tool buttons */
     w->tb_single  = gtk_toggle_button_new ();
@@ -175,6 +175,8 @@ static GtkWidget *win_disp_create_center_frame (struct win_disp *w)
 
 static void win_disp_create_layout (struct win_disp *w)
 {
+    w->_spacing = 10;
+
     /* main layout elements */
     GtkWidget *top_row   = win_disp_create_top_row (w);
     GtkWidget *top_line  = win_disp_create_new_separator_line (w);
@@ -183,7 +185,7 @@ static void win_disp_create_layout (struct win_disp *w)
     GtkWidget *bot_row   = win_disp_create_bottom_row (w);
 
     /* arrange */
-    GtkWidget *main_widget = gtk_box_new (GTK_ORIENTATION_VERTICAL, 1);
+    GtkWidget *main_widget = gtk_box_new (GTK_ORIENTATION_VERTICAL, w->_spacing);
     gtk_box_pack_start (GTK_BOX (main_widget), top_row,   false, true, 0);
     gtk_box_pack_start (GTK_BOX (main_widget), top_line,  false, true, 0);
     gtk_box_pack_start (GTK_BOX (main_widget), cen_frame, true,  true, 0);
@@ -193,6 +195,7 @@ static void win_disp_create_layout (struct win_disp *w)
     /* insert */
     w->win_main = gtk_window_new (GTK_WINDOW_TOPLEVEL);
     gtk_container_add (GTK_CONTAINER (w->win_main), main_widget);
+    gtk_container_set_border_width (GTK_CONTAINER (w->win_main), w->_spacing);
 
     /* title */
     gtk_window_set_title (GTK_WINDOW (w->win_main), "MPDisplay");

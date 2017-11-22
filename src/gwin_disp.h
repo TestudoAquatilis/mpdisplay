@@ -23,6 +23,8 @@ struct win_disp {
     guint      tm_update;
     /* status */
     struct mpdisplay_mpd_status *mpd_st_current;
+    /* spacings */
+    int _spacing;
 };
 
 struct win_disp *win_disp_new    ();
