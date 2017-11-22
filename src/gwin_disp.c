@@ -155,6 +155,8 @@ static GtkWidget *win_disp_create_bottom_row (struct win_disp *w)
     /* volume bar */
     w->pb_volume  = gtk_progress_bar_new ();
     gtk_progress_bar_set_fraction  (GTK_PROGRESS_BAR (w->pb_volume), 0.0);
+    gtk_progress_bar_set_text      (GTK_PROGRESS_BAR (w->pb_volume), "0%");
+    gtk_progress_bar_set_show_text (GTK_PROGRESS_BAR (w->pb_volume), true);
 
     /* put everything together */
     gtk_box_pack_start (GTK_BOX (result), w->tb_single,  false, true, 0);
@@ -305,16 +307,21 @@ static void win_disp_update_playlist_state_st (struct win_disp *w, struct mpdisp
 
 static void win_disp_update_volume_int (struct win_disp *w, int volume)
 {
-    gdouble gd_volume;
     if (volume < 0) {
-        gd_volume = 0.0;
+        volume = 0;
     } else if (volume > 100) {
-        gd_volume = 1.0;
-    } else {
-        gd_volume = (gdouble) volume / (gdouble) 100.0;
+        volume = 100;
     }
 
+    gdouble gd_volume = (gdouble) volume / (gdouble) 100.0;
+
+    GString *st_volume = g_string_new (NULL);
+    g_string_printf (st_volume, "%d%%", volume);
+
     gtk_progress_bar_set_fraction (GTK_PROGRESS_BAR (w->pb_volume), gd_volume);
+    gtk_progress_bar_set_text     (GTK_PROGRESS_BAR (w->pb_volume), st_volume->str);
+
+    g_string_free (st_volume, true);
 }
 
 static void win_disp_update_volume_st (struct win_disp *w, struct mpdisplay_mpd_status *st)
@@ -358,8 +365,8 @@ static void win_disp_update_time_int (struct win_disp *w, int total_s, int elaps
 
     gdouble pb_progress = (gdouble) elapsed_s / (gdouble) total_s;
 
-    gtk_progress_bar_set_fraction  (GTK_PROGRESS_BAR (w->pb_time), pb_progress);
-    gtk_progress_bar_set_text      (GTK_PROGRESS_BAR (w->pb_time), st_progress->str);
+    gtk_progress_bar_set_fraction (GTK_PROGRESS_BAR (w->pb_time), pb_progress);
+    gtk_progress_bar_set_text     (GTK_PROGRESS_BAR (w->pb_time), st_progress->str);
 
     g_string_free (st_progress, true);
 }
