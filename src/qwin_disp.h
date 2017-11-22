@@ -8,7 +8,7 @@ class WinDisp: public QMainWindow {
     Q_OBJECT
 
     public:
-        WinDisp();
+        WinDisp ();
 
     private:
         /* accessible widgets */

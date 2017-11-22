@@ -5,7 +5,7 @@
 #include "options.h"
 #include "mpd.h"
 
-WinDisp::WinDisp()
+WinDisp::WinDisp ()
 {
     mpd_st_current = nullptr;
     create_layout ();
@@ -60,8 +60,18 @@ QWidget *WinDisp::create_bottom_row ()
     tb_single->setText ("1");
     tb_repeat->setIcon (QIcon::fromTheme ("media-playlist-repeat-symbolic"));
     tb_shuffle->setIcon (QIcon::fromTheme ("media-playlist-shuffle-symbolic"));
+
+    /* sizing */
     tb_repeat->setIconSize (qicon_size);
     tb_shuffle->setIconSize (qicon_size);
+
+    /* workaround for size */
+    QFont font = tb_single->font();
+    font.setPixelSize ((icon_size*80)/100);
+    tb_single->setFont (font);
+
+    QSize hsize = tb_repeat->sizeHint ();
+    tb_single->setMinimumSize (hsize);
 
     tb_single->setCheckable(true);
     tb_repeat->setCheckable(true);
