@@ -1,8 +1,9 @@
-CC=gcc
-CXX=g++
-
 # define version: Qt, gtk
-VARIANT?=Qt
+VARIANT?=gtk
+# debug ?
+DEBUG?=0
+# compiler
+CC?=gcc
 
 EXECUTABLE_QT=qmpdisplay
 EXECUTABLE_GTK=gmpdisplay
@@ -32,6 +33,13 @@ endif
 # libs to include, executable, linker
 LIBS=glib-2.0 libmpdclient
 
+ifeq ($(CC),gcc)
+CXX=g++
+endif
+ifeq ($(CC),clang)
+CXX=clang++
+endif
+
 LD=$(CC)
 ifeq ($(VARIANT),Qt)
 LIBS+=Qt5Widgets
@@ -50,9 +58,12 @@ EXECUTABLE=$(EXECUTABLE_GTK)
 endif
 
 # flags
-OPTFLAGS=-O2
-#OPTFLAGS=-ggdb
-#CPPFLAGS+=-DDEBUG_NOMPD
+ifeq ($(DEBUG),0)
+OPTFLAGS+=-O2
+else
+OPTFLAGS+=-ggdb
+CPPFLAGS+=-DDEBUG_NOMPD
+endif
 
 ############################################################################
 # flags and co
@@ -110,7 +121,8 @@ $(OBJDIR) $(MOCDIR):
 	mkdir -p $@
 
 clean:
-	rm -f $(EXECUTABLE) $(OBJECTS) $(DEPS)
+	rm -f $(OBJECTS) $(DEPS)
+	rm -f $(EXECUTABLE_GTK) $(EXECUTABLE_QT)
 	rm -rf $(OBJDIR) $(MOCDIR)
 	rm -f *.moc.cpp
 
