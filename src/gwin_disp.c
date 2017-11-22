@@ -149,7 +149,7 @@ static GtkWidget *win_disp_create_bottom_row (struct win_disp *w)
     gtk_container_add (GTK_CONTAINER (w->tb_shuffle), img_shuffle);
 
     /* volume icon */
-    GtkWidget *img_volume  = gtk_image_new_from_icon_name ("multimedia-volume-control-symbolic", GTK_ICON_SIZE_SMALL_TOOLBAR);
+    GtkWidget *img_volume  = gtk_image_new_from_icon_name ("player-volume", GTK_ICON_SIZE_SMALL_TOOLBAR);
     if (icon_size > 0) {
         gtk_image_set_pixel_size (GTK_IMAGE (img_volume), icon_size);
     }
