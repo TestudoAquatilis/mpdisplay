@@ -7,12 +7,15 @@
 
 WinDisp::WinDisp()
 {
-    mpd_st_current = NULL;
+    mpd_st_current = nullptr;
     create_layout ();
     create_update_timer ();
     tm_update->start ();
 }
 
+/*****************************************************************************************/
+/* constructor helpers */
+/*****************************************************************************************/
 QWidget *WinDisp::create_top_row ()
 {
     QWidget *result = new QWidget;
@@ -159,6 +162,9 @@ void WinDisp::create_update_timer ()
     connect (tm_update, SIGNAL (timeout()), this, SLOT (update_mpd_status()));
 }
 
+/*****************************************************************************************/
+/* update helpers */
+/*****************************************************************************************/
 void WinDisp::update_playback_state (StateVal s)
 {
     const char *st_string_stop  = "media-playback-stop-symbolic";
@@ -180,14 +186,14 @@ void WinDisp::update_playback_state (StateVal s)
 
 void WinDisp::update_playback_state (struct mpdisplay_mpd_status *st)
 {
-    if ((st == NULL) || (!st->success)) {
+    if ((st == nullptr) || (!st->success)) {
         update_playback_state (ST_STOP);
         return;
     }
 
     struct mpdisplay_mpd_status *cst = mpd_st_current;
 
-    if ((cst != NULL) && (cst->success)) {
+    if ((cst != nullptr) && (cst->success)) {
         if ((cst->play == st->play) && (cst->pause == st->pause)) return;
     }
 
@@ -209,14 +215,14 @@ void WinDisp::update_playlist_state (bool single, bool repeat, bool shuffle)
 
 void WinDisp::update_playlist_state (struct mpdisplay_mpd_status *st)
 {
-    if ((st == NULL) || (!st->success)) {
+    if ((st == nullptr) || (!st->success)) {
         update_playlist_state (false, false, false);
         return;
     }
 
     struct mpdisplay_mpd_status *cst = mpd_st_current;
 
-    if ((cst != NULL) && (cst->success)) {
+    if ((cst != nullptr) && (cst->success)) {
         if ((cst->single == st->single) && (cst->repeat == st->repeat) && (cst->shuffle == st->shuffle)) return;
     }
 
@@ -236,14 +242,14 @@ void WinDisp::update_volume (int volume)
 
 void WinDisp::update_volume (struct mpdisplay_mpd_status *st)
 {
-    if ((st == NULL) || (!st->success)) {
+    if ((st == nullptr) || (!st->success)) {
         update_volume (0);
         return;
     }
 
     struct mpdisplay_mpd_status *cst = mpd_st_current;
 
-    if ((cst != NULL) && (cst->success)) {
+    if ((cst != nullptr) && (cst->success)) {
         if (cst->volume == st->volume) return;
     }
 
@@ -252,7 +258,7 @@ void WinDisp::update_volume (struct mpdisplay_mpd_status *st)
 
 void WinDisp::update_time (int total_s, int elapsed_s)
 {
-    GString *st_progress = g_string_new (NULL);
+    GString *st_progress = g_string_new (nullptr);
 
     if (elapsed_s >= 0) {
         g_string_printf (st_progress, "%d:%02d", elapsed_s/60, elapsed_s%60);
@@ -282,14 +288,14 @@ void WinDisp::update_time (int total_s, int elapsed_s)
 
 void WinDisp::update_time (struct mpdisplay_mpd_status *st)
 {
-    if ((st == NULL) || (!st->success)) {
+    if ((st == nullptr) || (!st->success)) {
         update_time (0, 0);
         return;
     }
 
     struct mpdisplay_mpd_status *cst = mpd_st_current;
 
-    if ((cst != NULL) && (cst->success)) {
+    if ((cst != nullptr) && (cst->success)) {
         if ((cst->seconds_elapsed == st->seconds_elapsed) && (cst->seconds_total == st->seconds_total)) return;
     }
 
@@ -317,7 +323,7 @@ void WinDisp::update_tags (GList *tlist)
 {
     clear_tags ();
 
-    for (GList *li = tlist; li != NULL; li = li->next) {
+    for (GList *li = tlist; li != nullptr; li = li->next) {
         struct mpdisplay_song_data_entry *e = static_cast<struct mpdisplay_song_data_entry *>(li->data);
 
         QLabel *lbl_name  = new QLabel (e->name);
@@ -355,14 +361,14 @@ void WinDisp::update_tags (struct mpdisplay_mpd_status *st)
 {
     struct mpdisplay_mpd_status *cst = mpd_st_current;
 
-    if ((st == NULL) || (!st->success)) {
-        if ((cst != NULL) && (cst->success)) {
+    if ((st == nullptr) || (!st->success)) {
+        if ((cst != nullptr) && (cst->success)) {
             update_tags_nocon ();
         }
         return;
     }
 
-    if ((cst != NULL) && (cst->success)) {
+    if ((cst != nullptr) && (cst->success)) {
         if (mpdisplay_mpd_status_tags_equal (cst, st)) return;
     }
 
@@ -381,6 +387,9 @@ void WinDisp::update_mpd_status (struct mpdisplay_mpd_status *st_new)
     mpd_st_current = mpdisplay_mpd_status_copy (st_new);
 }
 
+/*****************************************************************************************/
+/* handlers */
+/*****************************************************************************************/
 void WinDisp::update_mpd_status ()
 {
 #ifdef DEBUG_NOMPD
